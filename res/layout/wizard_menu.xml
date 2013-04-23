@@ -1,0 +1,80 @@
+<!--  
+Modified by :
+Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menu_accounts_option"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:background="@android:color/white"
+    android:orientation="horizontal"
+    android:padding="0dip">
+
+    <Button
+        android:id="@+id/compose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@drawable/ic_menu_compose"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/compose_title"
+        android:textStyle="bold"
+        android:background="@android:color/transparent" />
+    
+    <Button
+		android:id="@+id/search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@android:drawable/ic_search_category_default"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/search_action"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"  />
+ 
+    <Button
+		android:id="@+id/add_new_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@drawable/ic_menu_add"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/add_account_action"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"  />
+
+    <Button
+		android:id="@+id/about"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@android:drawable/ic_menu_info_details"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/about_action"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"  />
+
+    <Button
+		android:id="@+id/check_mail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@drawable/ic_menu_refresh"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/check_mail_action"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"  />
+
+    <Button
+		android:id="@+id/edit_prefs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:drawableLeft="@android:drawable/ic_menu_preferences"
+        android:minWidth="@dimen/button_minWidth"
+        android:text="@string/preferences_action"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"  />
+
+</LinearLayout>

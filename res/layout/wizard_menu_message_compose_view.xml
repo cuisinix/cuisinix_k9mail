@@ -1,0 +1,79 @@
+<!--  
+Modified by :
+Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menu_accounts_option"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_gravity="fill_horizontal"
+    android:background="@android:color/white"
+    android:orientation="horizontal"
+    android:padding="0dip" >
+
+    <HorizontalScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="fill_horizontal" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal" >
+            
+            <Button
+                android:id="@+id/send"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_menu_send"
+                android:minWidth="@dimen/button_minWidth"
+                android:text="@string/send_action"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/add_cc_bcc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_menu_cc"
+                android:minWidth="@dimen/button_minWidth"
+                android:text="@string/add_cc_bcc_action"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/add_attachment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_menu_attachment"
+                android:minWidth="@dimen/button_minWidth"
+                android:text="@string/add_attachment_action"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_menu_save_draft"
+                android:minWidth="@dimen/button_minWidth"
+                android:text="@string/save_draft_action"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/discard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_menu_close_clear_cancel"
+                android:minWidth="@dimen/button_minWidth"
+                android:text="@string/discard_action"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+</LinearLayout>

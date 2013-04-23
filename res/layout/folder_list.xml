@@ -1,0 +1,20 @@
+<!--  
+Modified by :
+Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent">
+    
+    <include layout="@layout/wizard_head" />
+    
+    <include layout="@layout/wizard_menu_folders" />
+    
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        />
+ 
+</LinearLayout>
