@@ -4,7 +4,6 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
 */
 package com.fsck.k9;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -19,14 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.text.Html;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.style.ImageSpan;
 import android.util.Log;
 
 import com.fsck.k9.activity.setup.AccountSetupComposition;
@@ -742,7 +737,8 @@ public class Account implements BaseAccount {
     }
 
 
-    public String getUuid() {
+    @Override
+	public String getUuid() {
         return mUuid;
     }
 
@@ -766,11 +762,13 @@ public class Account implements BaseAccount {
         this.mTransportUri = transportUri;
     }
 
-    public synchronized String getDescription() {
+    @Override
+	public synchronized String getDescription() {
         return mDescription;
     }
 
-    public synchronized void setDescription(String description) {
+    @Override
+	public synchronized void setDescription(String description) {
         this.mDescription = description;
     }
 
@@ -798,11 +796,13 @@ public class Account implements BaseAccount {
         identities.get(0).setSignature(signature);
     }
 
-    public synchronized String getEmail() {
+    @Override
+	public synchronized String getEmail() {
         return identities.get(0).getEmail();
     }
 
-    public synchronized void setEmail(String email) {
+    @Override
+	public synchronized void setEmail(String email) {
         identities.get(0).setEmail(email);
     }
 
