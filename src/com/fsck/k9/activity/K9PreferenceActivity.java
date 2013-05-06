@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 package com.fsck.k9.activity;
 
 import com.fsck.k9.K9;

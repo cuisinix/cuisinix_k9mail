@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 package com.fsck.k9.activity.setup;
 
 import java.io.File;
@@ -23,7 +19,9 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.widget.Toast;
 
+import com.fsck.k9.Account;
 import com.fsck.k9.K9;
+import com.fsck.k9.K9.NotificationHideSubject;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.Accounts;
@@ -36,6 +34,7 @@ import com.fsck.k9.preferences.CheckBoxListPreference;
 import com.fsck.k9.preferences.TimePickerPreference;
 
 import com.fsck.k9.service.MailService;
+import com.fsck.k9.view.MessageWebView;
 
 
 public class Prefs extends K9PreferenceActivity {
@@ -58,7 +57,7 @@ public class Prefs extends K9PreferenceActivity {
     private static final String PREFERENCE_MANAGE_BACK = "manage_back";
     private static final String PREFERENCE_START_INTEGRATED_INBOX = "start_integrated_inbox";
     private static final String PREFERENCE_CONFIRM_ACTIONS = "confirm_actions";
-    private static final String PREFERENCE_PRIVACY_MODE = "privacy_mode";
+    private static final String PREFERENCE_NOTIFICATION_HIDE_SUBJECT = "notification_hide_subject";
     private static final String PREFERENCE_MEASURE_ACCOUNTS = "measure_accounts";
     private static final String PREFERENCE_COUNT_SEARCH = "count_search";
     private static final String PREFERENCE_HIDE_SPECIAL_ACCOUNTS = "hide_special_accounts";
@@ -78,7 +77,12 @@ public class Prefs extends K9PreferenceActivity {
     private static final String PREFERENCE_QUIET_TIME_ENABLED = "quiet_time_enabled";
     private static final String PREFERENCE_QUIET_TIME_STARTS = "quiet_time_starts";
     private static final String PREFERENCE_QUIET_TIME_ENDS = "quiet_time_ends";
-
+    private static final String PREFERENCE_BATCH_BUTTONS_MARK_READ = "batch_buttons_mark_read";
+    private static final String PREFERENCE_BATCH_BUTTONS_DELETE = "batch_buttons_delete";
+    private static final String PREFERENCE_BATCH_BUTTONS_ARCHIVE = "batch_buttons_archive";
+    private static final String PREFERENCE_BATCH_BUTTONS_MOVE = "batch_buttons_move";
+    private static final String PREFERENCE_BATCH_BUTTONS_FLAG = "batch_buttons_flag";
+    private static final String PREFERENCE_BATCH_BUTTONS_UNSELECT = "batch_buttons_unselect";
 
     private static final String PREFERENCE_MESSAGEVIEW_MOBILE_LAYOUT = "messageview_mobile_layout";
     private static final String PREFERENCE_BACKGROUND_OPS = "background_ops";
@@ -98,7 +102,7 @@ public class Prefs extends K9PreferenceActivity {
     private CheckBoxPreference mManageBack;
     private CheckBoxPreference mStartIntegratedInbox;
     private CheckBoxListPreference mConfirmActions;
-    private CheckBoxPreference mPrivacyMode;
+    private ListPreference mNotificationHideSubject;
     private CheckBoxPreference mMeasureAccounts;
     private CheckBoxPreference mCountSearch;
     private CheckBoxPreference mHideSpecialAccounts;
@@ -125,6 +129,12 @@ public class Prefs extends K9PreferenceActivity {
     private com.fsck.k9.preferences.TimePickerPreference mQuietTimeEnds;
     private Preference mAttachmentPathPreference;
 
+    private CheckBoxPreference mBatchButtonsMarkRead;
+    private CheckBoxPreference mBatchButtonsDelete;
+    private CheckBoxPreference mBatchButtonsArchive;
+    private CheckBoxPreference mBatchButtonsMove;
+    private CheckBoxPreference mBatchButtonsFlag;
+    private CheckBoxPreference mBatchButtonsUnselect;
 
     public static void actionPrefs(Context context) {
         Intent i = new Intent(context, Prefs.class);
@@ -134,7 +144,7 @@ public class Prefs extends K9PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		
+
         addPreferencesFromResource(R.xml.global_preferences);
 
         mLanguage = (ListPreference) findPreference(PREFERENCE_LANGUAGE);
@@ -152,7 +162,7 @@ public class Prefs extends K9PreferenceActivity {
                            entryVector.toArray(EMPTY_CHAR_SEQUENCE_ARRAY),
                            entryValueVector.toArray(EMPTY_CHAR_SEQUENCE_ARRAY));
 
-        final String theme = (K9.getK9Theme() == android.R.style.Theme) ? "dark" : "light";
+        final String theme = (K9.getK9Theme() == K9.THEME_DARK) ? "dark" : "light";
         mTheme = setupListPreference(PREFERENCE_THEME, theme);
 
         findPreference(PREFERENCE_FONT_SIZE).setOnPreferenceClickListener(
@@ -207,8 +217,8 @@ public class Prefs extends K9PreferenceActivity {
                                             K9.confirmMarkAllAsRead()
                                         });
 
-        mPrivacyMode = (CheckBoxPreference) findPreference(PREFERENCE_PRIVACY_MODE);
-        mPrivacyMode.setChecked(K9.keyguardPrivacy());
+        mNotificationHideSubject = setupListPreference(PREFERENCE_NOTIFICATION_HIDE_SUBJECT,
+                K9.getNotificationHideSubject().toString());
 
         mMeasureAccounts = (CheckBoxPreference)findPreference(PREFERENCE_MEASURE_ACCOUNTS);
         mMeasureAccounts.setChecked(K9.measureAccounts());
@@ -271,12 +281,12 @@ public class Prefs extends K9PreferenceActivity {
         mZoomControlsEnabled.setChecked(K9.zoomControlsEnabled());
 
         mMobileOptimizedLayout = (CheckBoxPreference) findPreference(PREFERENCE_MESSAGEVIEW_MOBILE_LAYOUT);
-        if (Build.VERSION.SDK_INT <= 7) {
+        if (!MessageWebView.isSingleColumnLayoutSupported()) {
             mMobileOptimizedLayout.setEnabled(false);
+            mMobileOptimizedLayout.setChecked(false);
+        } else {
+            mMobileOptimizedLayout.setChecked(K9.mobileOptimizedLayout());
         }
-
-
-        mMobileOptimizedLayout.setChecked(K9.mobileOptimizedLayout());
 
         mQuietTimeEnabled = (CheckBoxPreference) findPreference(PREFERENCE_QUIET_TIME_ENABLED);
         mQuietTimeEnabled.setChecked(K9.getQuietTimeEnabled());
@@ -307,6 +317,33 @@ public class Prefs extends K9PreferenceActivity {
 
 
         mBackgroundOps = setupListPreference(PREFERENCE_BACKGROUND_OPS, K9.getBackgroundOps().toString());
+        // In ICS+ there is no 'background data' setting that apps can chose to ignore anymore. So
+        // we hide that option for "Background Sync".
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            CharSequence[] oldEntries = mBackgroundOps.getEntries();
+            CharSequence[] newEntries = new CharSequence[3];
+            // Use "When 'Auto-sync' is checked" instead of "When 'Background data' & 'Auto-sync'
+            // are checked" as description.
+            newEntries[0] = getString(R.string.background_ops_auto_sync_only);
+            newEntries[1] = oldEntries[2];
+            newEntries[2] = oldEntries[3];
+
+            CharSequence[] oldValues = mBackgroundOps.getEntryValues();
+            CharSequence[] newValues = new CharSequence[3];
+            newValues[0] = oldValues[1];
+            newValues[1] = oldValues[2];
+            newValues[2] = oldValues[3];
+
+            mBackgroundOps.setEntries(newEntries);
+            mBackgroundOps.setEntryValues(newValues);
+
+            // Since ConnectivityManager.getBackgroundDataSetting() always returns 'true' on ICS+
+            // we map WHEN_CHECKED to ALWAYS.
+            if (K9.getBackgroundOps() == K9.BACKGROUND_OPS.WHEN_CHECKED) {
+                mBackgroundOps.setValue(K9.BACKGROUND_OPS.ALWAYS.toString());
+                mBackgroundOps.setSummary(mBackgroundOps.getEntry());
+            }
+        }
 
         mUseGalleryBugWorkaround = (CheckBoxPreference)findPreference(PREFERENCE_GALLERY_BUG_WORKAROUND);
         mUseGalleryBugWorkaround.setChecked(K9.useGalleryBugWorkaround());
@@ -346,13 +383,39 @@ public class Prefs extends K9PreferenceActivity {
                 }
             };
         });
+
+        mBatchButtonsMarkRead = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_MARK_READ);
+        mBatchButtonsDelete = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_DELETE);
+        mBatchButtonsArchive = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_ARCHIVE);
+        mBatchButtonsMove = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_MOVE);
+        mBatchButtonsFlag = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_FLAG);
+        mBatchButtonsUnselect = (CheckBoxPreference)findPreference(PREFERENCE_BATCH_BUTTONS_UNSELECT);
+        mBatchButtonsMarkRead.setChecked(K9.batchButtonsMarkRead());
+        mBatchButtonsDelete.setChecked(K9.batchButtonsDelete());
+        mBatchButtonsArchive.setChecked(K9.batchButtonsArchive());
+        mBatchButtonsMove.setChecked(K9.batchButtonsMove());
+        mBatchButtonsFlag.setChecked(K9.batchButtonsFlag());
+        mBatchButtonsUnselect.setChecked(K9.batchButtonsUnselect());
+
+        // If we don't have any accounts with an archive folder, then don't enable the preference.
+        boolean hasArchiveFolder = false;
+        for (final Account acct : Preferences.getPreferences(this).getAccounts()) {
+            if (acct.hasArchiveFolder()) {
+                hasArchiveFolder = true;
+                break;
+            }
+        }
+        if (!hasArchiveFolder) {
+            mBatchButtonsArchive.setEnabled(false);
+            mBatchButtonsArchive.setSummary(R.string.global_settings_archive_disabled_reason);
+        }
     }
 
     private void saveSettings() {
         SharedPreferences preferences = Preferences.getPreferences(this).getPreferences();
 
         K9.setK9Language(mLanguage.getValue());
-        K9.setK9Theme(mTheme.getValue().equals("dark") ? android.R.style.Theme : android.R.style.Theme_Light);
+        K9.setK9Theme(mTheme.getValue().equals("dark") ? K9.THEME_DARK : K9.THEME_LIGHT);
         K9.setAnimations(mAnimations.isChecked());
         K9.setGesturesEnabled(mGestures.isChecked());
         K9.setCompactLayouts(compactLayouts.isChecked());
@@ -364,7 +427,8 @@ public class Prefs extends K9PreferenceActivity {
         K9.setConfirmDeleteStarred(mConfirmActions.getCheckedItems()[1]);
         K9.setConfirmSpam(mConfirmActions.getCheckedItems()[2]);
         K9.setConfirmMarkAllAsRead(mConfirmActions.getCheckedItems()[3]);
-        K9.setKeyguardPrivacy(mPrivacyMode.isChecked());
+        K9.setNotificationHideSubject(NotificationHideSubject.valueOf(mNotificationHideSubject.getValue()));
+
         K9.setMeasureAccounts(mMeasureAccounts.isChecked());
         K9.setCountSearchMessages(mCountSearch.isChecked());
         K9.setHideSpecialAccounts(mHideSpecialAccounts.isChecked());
@@ -384,6 +448,12 @@ public class Prefs extends K9PreferenceActivity {
         K9.setQuietTimeStarts(mQuietTimeStarts.getTime());
         K9.setQuietTimeEnds(mQuietTimeEnds.getTime());
 
+        K9.setBatchButtonsMarkRead(mBatchButtonsMarkRead.isChecked());
+        K9.setBatchButtonsDelete(mBatchButtonsDelete.isChecked());
+        K9.setBatchButtonsArchive(mBatchButtonsArchive.isChecked());
+        K9.setBatchButtonsMove(mBatchButtonsMove.isChecked());
+        K9.setBatchButtonsFlag(mBatchButtonsFlag.isChecked());
+        K9.setBatchButtonsUnselect(mBatchButtonsUnselect.isChecked());
 
         K9.setZoomControlsEnabled(mZoomControlsEnabled.isChecked());
         K9.setAttachmentDefaultPath(mAttachmentPathPreference.getSummary().toString());
@@ -407,9 +477,13 @@ public class Prefs extends K9PreferenceActivity {
     }
 
     @Override
-    public void onBackPressed() {
+    protected void onPause() {
         saveSettings();
+        super.onPause();
+    }
 
+    @Override
+    public void onBackPressed() {
         if (K9.manageBack()) {
             Accounts.listAccounts(this);
             finish();

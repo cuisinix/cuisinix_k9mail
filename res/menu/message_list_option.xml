@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
    <item
         android:id="@+id/compose"
@@ -17,6 +14,10 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
             <item
                 android:id="@+id/set_sort_date"
                 android:title="@string/sort_by_date"
+            />
+            <item
+                android:id="@+id/set_sort_arrival"
+                android:title="@string/sort_by_arrival"
             />
             <item
                 android:id="@+id/set_sort_subject"

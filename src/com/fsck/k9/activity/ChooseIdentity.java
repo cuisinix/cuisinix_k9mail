@@ -17,7 +17,6 @@ import java.util.List;
 
 public class ChooseIdentity extends K9ListActivity {
     Account mAccount;
-    String mUID;
     ArrayAdapter<String> adapter;
 
     public static final String EXTRA_ACCOUNT = "com.fsck.k9.ChooseIdentity_account";
@@ -30,7 +29,6 @@ public class ChooseIdentity extends K9ListActivity {
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         getListView().setTextFilterEnabled(true);
         getListView().setItemsCanFocus(false);

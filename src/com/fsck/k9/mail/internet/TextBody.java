@@ -1,8 +1,6 @@
 
 package com.fsck.k9.mail.internet;
 
-import android.text.SpannableString;
-
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.MessagingException;
 
@@ -29,8 +27,8 @@ public class TextBody implements Body {
     public TextBody(String body) {
         this.mBody = body;
     }
-    
-	public void writeTo(OutputStream out) throws IOException, MessagingException {
+
+    public void writeTo(OutputStream out) throws IOException, MessagingException {
         if (mBody != null) {
             byte[] bytes = mBody.getBytes(mCharset);
             if ("8bit".equals(mEncoding)) {

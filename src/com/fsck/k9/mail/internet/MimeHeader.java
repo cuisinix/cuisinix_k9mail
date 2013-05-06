@@ -118,14 +118,13 @@ public class MimeHeader {
         writer.flush();
     }
 
-    // encode non printable characters except LF/CR codes.
+    // encode non printable characters except LF/CR/TAB codes.
     public boolean hasToBeEncoded(String text) {
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c < 0x20 || 0x7e < c) { // non printable
-                if (c != 0x0a && c != 0x0d) { // non LF/CR
-                    return true;
-                }
+            if ((c < 0x20 || 0x7e < c) && // non printable
+                    (c != 0x0a && c != 0x0d && c != 0x09)) { // non LF/CR/TAB
+                return true;
             }
         }
 
@@ -133,9 +132,9 @@ public class MimeHeader {
     }
 
     static class Field {
-        String name;
+        final String name;
 
-        String value;
+        final String value;
 
         public Field(String name, String value) {
             this.name = name;
@@ -152,5 +151,14 @@ public class MimeHeader {
 
     public void setCharset(String charset) {
         mCharset = charset;
+    }
+
+    public MimeHeader clone() {
+        MimeHeader header = new MimeHeader();
+        header.mCharset = mCharset;
+
+        header.mFields = new ArrayList<Field>(mFields);
+
+        return header;
     }
 }

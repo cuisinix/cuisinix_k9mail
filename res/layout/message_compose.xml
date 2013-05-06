@@ -1,23 +1,15 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffff"
-    android:orientation="vertical" >
-
-    <include layout="@layout/wizard_head" />
-
-    <include layout="@layout/wizard_menu_message_compose_view" />
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:fillViewport="true"
-        android:scrollbarStyle="outsideInset" >
+        android:scrollbarStyle="insideOverlay"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="fill_parent"
@@ -27,164 +19,164 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:background="#ededed"
-                android:orientation="vertical" >
+                android:layout_marginBottom="4dp"
+                android:paddingTop="6dp"
+                android:orientation="vertical"
+                android:background="#45bcbcbc">
 
-                <TextView
-                    android:id="@+id/from"
+                <Button
+                    android:id="@+id/identity"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="left|center"
                     android:layout_marginLeft="6dip"
-                    android:layout_marginRight="6dip"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/primary_text_light" />
+                    android:layout_marginRight="6dip"/>
 
                 <LinearLayout
                     android:id="@+id/to_wrapper"
-                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:baselineAligned="true"
                     android:layout_marginLeft="6dip"
                     android:layout_marginRight="6dip"
-                    android:baselineAligned="true" >
+                    android:layout_width="fill_parent">
 
                     <MultiAutoCompleteTextView
                         android:id="@+id/to"
-                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="6dip"
-                        android:layout_weight="5"
-                        android:hint="@string/message_compose_to_hint"
-                        android:imeOptions="actionNext"
                         android:inputType="textEmailAddress|textMultiLine"
+                        android:imeOptions="actionNext"
+                        android:hint="@string/message_compose_to_hint"
                         android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="@android:color/primary_text_light" />
+                        android:layout_width="0dp"
+                        android:layout_marginRight="6dip"
+                        android:layout_weight="1"/>
 
                     <ImageButton
                         android:id="@+id/add_to"
-                        android:layout_width="60dip"
+                        android:contentDescription="@string/message_compose_description_add_to"
+                        android:src="@drawable/ic_button_contacts"
                         android:layout_height="fill_parent"
-                        android:layout_marginTop="1dip"
-                        android:layout_weight="1"
-                        android:src="@drawable/ic_button_contacts" />
+                        android:layout_width="wrap_content"
+                        android:layout_marginTop="1dip"/>
+
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/cc_wrapper"
-                    android:layout_width="fill_parent"
+                    android:visibility="gone"
                     android:layout_height="wrap_content"
+                    android:baselineAligned="true"
                     android:layout_marginLeft="6dip"
                     android:layout_marginRight="6dip"
-                    android:baselineAligned="true"
-                    android:visibility="gone" >
+                    android:layout_width="fill_parent">
 
                     <MultiAutoCompleteTextView
                         android:id="@+id/cc"
-                        android:layout_width="fill_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:layout_marginRight="6dip"
-                        android:layout_weight="5"
-                        android:hint="@string/message_compose_cc_hint"
-                        android:imeOptions="actionNext"
                         android:inputType="textEmailAddress|textMultiLine"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="@android:color/primary_text_light" />
+                        android:imeOptions="actionNext"
+                        android:hint="@string/message_compose_cc_hint"
+                        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
                     <ImageButton
                         android:id="@+id/add_cc"
-                        android:layout_width="60dip"
+                        android:contentDescription="@string/message_compose_description_add_cc"
+                        android:src="@drawable/ic_button_contacts"
+                        android:layout_width="wrap_content"
                         android:layout_height="fill_parent"
-                        android:layout_marginTop="1dip"
-                        android:layout_weight="1"
-                        android:src="@drawable/ic_button_contacts" />
+                        android:layout_marginTop="1dip"/>
+
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/bcc_wrapper"
-                    android:layout_width="fill_parent"
+                    android:visibility="gone"
                     android:layout_height="wrap_content"
+                    android:baselineAligned="true"
                     android:layout_marginLeft="6dip"
                     android:layout_marginRight="6dip"
-                    android:baselineAligned="true"
-                    android:visibility="gone" >
+                    android:layout_width="fill_parent">
 
                     <MultiAutoCompleteTextView
                         android:id="@+id/bcc"
-                        android:layout_width="fill_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginRight="6dip"
-                        android:layout_weight="5"
-                        android:hint="@string/message_compose_bcc_hint"
-                        android:imeOptions="actionNext"
+                        android:layout_weight="1"
                         android:inputType="textEmailAddress|textMultiLine"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="@android:color/primary_text_light" />
+                        android:imeOptions="actionNext"
+                        android:hint="@string/message_compose_bcc_hint"
+                        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
                     <ImageButton
                         android:id="@+id/add_bcc"
-                        android:layout_width="60dip"
-                        android:layout_height="fill_parent"
+                        android:contentDescription="@string/message_compose_description_add_bcc"
                         android:layout_marginTop="1dip"
-                        android:layout_weight="1"
-                        android:src="@drawable/ic_button_contacts" />
+                        android:layout_height="fill_parent"
+                        android:layout_width="wrap_content"
+                        android:src="@drawable/ic_button_contacts"/>
+
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/layout_encrypt"
+                    android:orientation="horizontal"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:visibility="gone"
                     android:paddingLeft="6dip"
-                    android:paddingRight="6dip"
-                    android:visibility="gone" >
+                    android:paddingRight="6dip">
 
                     <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_gravity="center_vertical"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:orientation="horizontal" >
+                        android:layout_weight="1">
 
                         <CheckBox
-                            android:id="@+id/cb_crypto_signature"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
                             android:text="@string/btn_crypto_sign"
-                            android:textColor="@android:color/primary_text_light" />
+                            android:id="@+id/cb_crypto_signature"
+                            android:layout_gravity="center_vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
                             android:orientation="vertical"
-                            android:paddingRight="2dip" >
+                            android:layout_gravity="center_vertical"
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:paddingRight="2dip">
 
                             <TextView
                                 android:id="@+id/userId"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
                                 android:ellipsize="end"
                                 android:textAppearance="?android:attr/textAppearanceSmall"
-                                android:textColor="@android:color/primary_text_light" />
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
 
                             <TextView
                                 android:id="@+id/userIdRest"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:textSize="10sp"
                                 android:ellipsize="end"
-                                android:textColor="@android:color/primary_text_light"
-                                android:textSize="10sp" />
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
                         </LinearLayout>
+
                     </LinearLayout>
 
                     <CheckBox
+                        android:text="@string/btn_encrypt"
                         android:id="@+id/cb_encrypt"
+                        android:layout_gravity="center_vertical"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:text="@string/btn_encrypt"
-                        android:textColor="@android:color/primary_text_light" />
+                        android:layout_weight="1"/>
+
                 </LinearLayout>
 
                 <EditText
@@ -194,17 +186,15 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
                     android:layout_marginLeft="6dip"
                     android:layout_marginRight="6dip"
                     android:hint="@string/message_compose_subject_hint"
-                    android:imeOptions="actionNext"
                     android:inputType="textEmailSubject|textAutoCorrect|textCapSentences|textImeMultiLine"
+                    android:imeOptions="actionNext"
                     android:singleLine="true"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/primary_text_light" />
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
 
                 <!--
                     Empty container for storing attachments. We'll stick
                     instances of message_compose_attachment.xml in here.
                 -->
-
                 <LinearLayout
                     android:id="@+id/attachments"
                     android:layout_width="fill_parent"
@@ -215,113 +205,108 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
                     android:layout_width="fill_parent"
                     android:layout_height="1dip"
                     android:background="@drawable/divider_horizontal_email" />
+
             </LinearLayout>
 
+            <!-- We have to use "wrap_content" (not "0dip") for "layout_height", otherwise the
+                 EditText won't properly grow in height while the user is typing the message -->
             <EditText
                 android:id="@+id/message_content"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.0"
+                android:layout_weight="1"
                 android:gravity="left|top"
                 android:hint="@string/message_compose_content_hint"
-                android:imeOptions="actionDone|flagNoEnterAction"
                 android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+                android:imeOptions="actionDone|flagNoEnterAction"
                 android:minLines="3"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/primary_text_light" />
-
-            <WebView
-                android:id="@+id/signature_visualisation_compose"
-                android:layout_width="fill_parent"
-                android:layout_height="100dp" />
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <EditText
                 android:id="@+id/upper_signature"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.0"
+                android:gravity="left|top"
+                android:editable="false"
+                android:minLines="0"
                 android:autoText="true"
                 android:capitalize="sentences"
-                android:editable="false"
-                android:gravity="left|top"
-                android:minLines="0"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/primary_text_light" />
+                android:hint="@string/message_compose_signature_hint"
+                android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <Button
                 android:id="@+id/quoted_text_show"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
-                android:layout_gravity="right"
-                android:padding="0dip"
                 android:text="@string/message_compose_show_quoted_text_action"
-                android:textSize="16dip" />
+                android:textSize="16dip"
+                android:padding="0dip"
+                android:layout_gravity="right"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"/>
 
             <!-- Quoted text bar -->
-
             <RelativeLayout
                 android:id="@+id/quoted_text_bar"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content">
 
                 <EditText
                     android:id="@+id/quoted_text"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.0"
-                    android:autoText="true"
-                    android:capitalize="sentences"
                     android:gravity="left|top"
                     android:minLines="3"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/primary_text_light" />
+                    android:autoText="true"
+                    android:capitalize="sentences"
+                    android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
 
                 <com.fsck.k9.view.MessageWebView
                     android:id="@+id/quoted_html"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:layout_width="fill_parent" />
 
                 <LinearLayout
                     android:id="@+id/quoted_text_buttons"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentTop="true" >
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true">
 
                     <ImageButton
                         android:id="@+id/quoted_text_edit"
+                        android:contentDescription="@string/message_compose_description_edit_quoted_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_alignParentTop="true"
                         android:layout_marginRight="8dip"
                         android:background="@drawable/btn_edit" />
 
                     <ImageButton
                         android:id="@+id/quoted_text_delete"
+                        android:contentDescription="@string/message_compose_description_delete_quoted_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentRight="true"
-                        android:layout_alignParentTop="true"
                         android:background="@drawable/btn_dialog" />
+
                 </LinearLayout>
+
             </RelativeLayout>
 
             <EditText
                 android:id="@+id/lower_signature"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.0"
+                android:gravity="left|top"
+                android:editable="false"
+                android:minLines="0"
                 android:autoText="true"
                 android:capitalize="sentences"
-                android:editable="false"
-                android:gravity="left|top"
-                android:minLines="0"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/primary_text_light" />
+                android:hint="@string/message_compose_signature_hint"
+                android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
         </LinearLayout>
+
     </ScrollView>
 
 </LinearLayout>

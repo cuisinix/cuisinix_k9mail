@@ -1,13 +1,6 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 package com.fsck.k9;
 
 import java.io.Serializable;
-
-import android.text.SpannableString;
-import android.text.Spanned;
 
 public class Identity implements Serializable {
     private static final long serialVersionUID = -1666669071480985760L;
@@ -15,7 +8,7 @@ public class Identity implements Serializable {
     private String mName;
     private String mEmail;
     private String mSignature;
-    private boolean mSignatureUse = true;
+    private boolean mSignatureUse;
     private String replyTo;
 
     public synchronized String getName() {
@@ -42,12 +35,12 @@ public class Identity implements Serializable {
         mSignatureUse = signatureUse;
     }
 
-    public synchronized Spanned getSignature() {
-        return new SpannableString(mSignature);
+    public synchronized String getSignature() {
+        return mSignature;
     }
 
-    public synchronized void setSignature(Spanned signature) {
-        mSignature = signature.toString();
+    public synchronized void setSignature(String signature) {
+        mSignature = signature;
     }
 
     public synchronized String getDescription() {
@@ -68,6 +61,6 @@ public class Identity implements Serializable {
 
     @Override
     public synchronized String toString() {
-        return "Account.Identity(description=" + mDescription + ", name=" + mName + ", email=" + mEmail + ", replyTo=" + replyTo + ", signature=" + mSignature.toString();
+        return "Account.Identity(description=" + mDescription + ", name=" + mName + ", email=" + mEmail + ", replyTo=" + replyTo + ", signature=" + mSignature;
     }
 }

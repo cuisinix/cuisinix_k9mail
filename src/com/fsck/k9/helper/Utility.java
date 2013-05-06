@@ -19,6 +19,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utility {
+    /**
+     * Regular expression that represents characters we won't allow in file names.
+     *
+     * <p>
+     * Allowed are:
+     * <ul>
+     *   <li>word characters (letters, digits, and underscores): {@code \w}</li>
+     *   <li>spaces: {@code " "}</li>
+     *   <li>special characters: {@code !}, {@code #}, {@code $}, {@code %}, {@code &}, {@code '},
+     *       {@code (}, {@code )}, {@code -}, {@code @}, {@code ^}, {@code `}, <code>&#123;</code>,
+     *       <code>&#125;</code>, {@code ~}, {@code .}, {@code ,}</li>
+     * </ul></p>
+     *
+     * @see #sanitizeFilename(String)
+     */
+    private static final String INVALID_CHARACTERS = "[^\\w !#$%&'()\\-@\\^`{}~.,]+";
+
+    /**
+     * Invalid characters in a file name are replaced by this character.
+     *
+     * @see #sanitizeFilename(String)
+     */
+    private static final String REPLACEMENT_CHARACTER = "_";
 
     // \u00A0 (non-breaking space) happens to be used by French MUA
 
@@ -186,6 +209,7 @@ public class Utility {
         }
     }
 
+    private static final long MILISECONDS_IN_18_HOURS = 18 * 60 * 60 * 1000;
     /**
      * Returns true if the specified date is within 18 hours of "now". Returns false otherwise.
      * @param date
@@ -193,7 +217,7 @@ public class Utility {
      */
     public static boolean isDateToday(Date date) {
         Date now = new Date();
-        if (now.getTime() - 64800000 > date.getTime() || now.getTime() + 64800000 < date.getTime()) {
+        if (now.getTime() - MILISECONDS_IN_18_HOURS > date.getTime() || now.getTime() + MILISECONDS_IN_18_HOURS < date.getTime()) {
             return false;
         } else {
             return true;
@@ -500,14 +524,20 @@ public class Utility {
 
         try {
             FileInputStream in = new FileInputStream(from);
-            FileOutputStream out = new FileOutputStream(to);
-            byte[] buffer = new byte[1024];
-            int count = -1;
-            while ((count = in.read(buffer)) > 0) {
-                out.write(buffer, 0, count);
+            try {
+                FileOutputStream out = new FileOutputStream(to);
+                try {
+                    byte[] buffer = new byte[1024];
+                    int count = -1;
+                    while ((count = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, count);
+                    }
+                } finally {
+                    out.close();
+                }
+            } finally {
+                try { in.close(); } catch (Throwable ignore) {}
             }
-            out.close();
-            in.close();
             from.delete();
             return true;
         } catch (Exception e) {
@@ -597,5 +627,17 @@ public class Utility {
         if (cursor != null) {
             cursor.close();
         }
+    }
+
+    /**
+     * Replace characters we don't allow in file names with a replacement character.
+     *
+     * @param filename
+     *         The original file name.
+     *
+     * @return The sanitized file name containing only allowed characters.
+     */
+    public static String sanitizeFilename(String filename) {
+        return filename.replaceAll(INVALID_CHARACTERS, REPLACEMENT_CHARACTER);
     }
 }

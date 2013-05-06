@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 package com.fsck.k9.activity;
 
 import android.app.ListActivity;
@@ -17,9 +13,8 @@ public class K9ListActivity extends ListActivity {
     @Override
     public void onCreate(Bundle icicle) {
         K9Activity.setLanguage(this, K9.getK9Language());
-        setTheme(K9.getK9Theme());
+        setTheme(K9.getK9ThemeResourceId());
         super.onCreate(icicle);
-        //setContentView(findViewById(R.layout.accounts));
         setupFormats();
     }
 

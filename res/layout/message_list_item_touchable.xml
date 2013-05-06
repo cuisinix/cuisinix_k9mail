@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -42,7 +39,8 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentTop="true"   
+        android:layout_marginRight="3dip"
         android:paddingLeft="5dip"
         android:singleLine="true"
         android:textColor="?android:attr/textColorSecondary"
@@ -55,39 +53,39 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:gravity="bottom"
+        android:layout_marginRight="3dip"
         android:layout_below="@+id/date"
         android:layout_marginTop="3dip"
         style="?android:attr/starStyle"
         android:focusable="false" />
 
+
     <TextView
         android:id="@+id/subject"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/date"
-        android:layout_marginLeft="1dip"
-        android:layout_marginRight="1dip"
         android:layout_toLeftOf="@+id/date"
         android:layout_toRightOf="@+id/chip"
-        android:ellipsize="marquee"
+        android:layout_marginLeft="1dip"
+        android:layout_marginRight="1dip"
         android:paddingBottom="1dip"
         android:singleLine="true"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:attr/textColorPrimary" />
+        android:ellipsize="marquee"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <TextView
         android:id="@+id/preview"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_below="@+id/subject"
-        android:layout_marginLeft="1dip"
-        android:layout_marginRight="0dip"
         android:layout_toLeftOf="@+id/flagged"
         android:layout_toRightOf="@+id/chip"
-        android:bufferType="spannable"
+        android:layout_marginLeft="1dip"
+        android:layout_marginRight="0dip"
         android:singleLine="false"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:attr/textColorPrimary" />
+        android:bufferType="spannable"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </RelativeLayout>

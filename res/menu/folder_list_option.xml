@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
    <item
 		android:id="@+id/compose"
@@ -38,6 +35,11 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
             android:id="@+id/list_folders"
             android:title="@string/refresh_folders_action"
             android:icon="@drawable/ic_menu_refresh"
+         />
+           <item
+            android:id="@+id/filter_folders"
+            android:title="@string/filter_folders_action"
+            android:icon="@drawable/ic_menu_search"
          />
         
         </menu>

@@ -1,28 +1,16 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 package com.fsck.k9.activity;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
-
 import android.os.Bundle;
-import android.text.SpannableString;
-import android.util.Log;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-
 import com.fsck.k9.Account;
 import com.fsck.k9.Identity;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
+import java.util.List;
 
 public class EditIdentity extends K9Activity {
 
@@ -96,16 +84,10 @@ public class EditIdentity extends K9Activity {
         });
 
         if (mSignatureUse.isChecked()) {
-            mSignatureView.setText(mAccount.getSignature());
-
+            mSignatureView.setText(mIdentity.getSignature());
         } else {
             mSignatureLayout.setVisibility(View.GONE);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     private void saveIdentity() {
@@ -115,8 +97,7 @@ public class EditIdentity extends K9Activity {
         //      mIdentity.setAlwaysBcc(mAccountAlwaysBcc.getText().toString());
         mIdentity.setName(mNameView.getText().toString());
         mIdentity.setSignatureUse(mSignatureUse.isChecked());
-        SpannableString s = new SpannableString(mSignatureView.getText().toString());
-        mIdentity.setSignature(s);
+        mIdentity.setSignature(mSignatureView.getText().toString());
 
         if (mReplyTo.getText().length() == 0) {
             mIdentity.setReplyTo(null);

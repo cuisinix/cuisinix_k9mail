@@ -9,7 +9,6 @@ import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.widget.*;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -100,7 +99,6 @@ public class AccountSetupIncoming extends K9Activity implements OnClickListener 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.account_setup_incoming);
 
         mUsernameView = (EditText)findViewById(R.id.account_username);

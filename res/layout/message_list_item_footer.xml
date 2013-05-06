@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -9,7 +6,6 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
     android:background="@drawable/message_list_item_footer_background"
     android:gravity="center"
     android:orientation="horizontal">
-    
     <ProgressBar
         android:id="@+id/message_list_progress"
         android:layout_height="wrap_content"

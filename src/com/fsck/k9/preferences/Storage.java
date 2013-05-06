@@ -214,7 +214,7 @@ public class Storage implements SharedPreferences {
     }
 
     protected void put(Map<String, String> insertables) {
-        String sql = "insert into preferences_storage (primkey, value) VALUES (?, ?)";
+        String sql = "INSERT INTO preferences_storage (primkey, value) VALUES (?, ?)";
         SQLiteStatement stmt = workingDB.get().compileStatement(sql);
 
         for (Map.Entry<String, String> entry : insertables.entrySet()) {
@@ -402,8 +402,8 @@ public class Storage implements SharedPreferences {
     }
 
 
-	public Set<String> getStringSet(String arg0, Set<String> arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Set<String> getStringSet(String arg0, Set<String> arg1) {
+        throw new RuntimeException("Not implemented");
+    }
 }

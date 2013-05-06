@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 /*
  * Copyright (C) 2007 The Android Open Source Project
  *
@@ -29,22 +25,11 @@ import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
 
 public class EmailAddressAdapter extends ResourceCursorAdapter {
-    private static EmailAddressAdapter sInstance;
-
-    public static EmailAddressAdapter getInstance(Context context) {
-        if (sInstance == null) {
-            sInstance = new EmailAddressAdapter(context);
-        }
-
-        return sInstance;
-    }
-
-
     private final Contacts mContacts;
 
-    private EmailAddressAdapter(Context context) {
+    public EmailAddressAdapter(Context context) {
         super(context, R.layout.recipient_dropdown_item, null);
-        mContacts = Contacts.getInstance(context);
+        mContacts = Contacts.getInstance(context.getApplicationContext());
     }
 
     @Override
@@ -52,7 +37,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
         final String name = mContacts.getName(cursor);
         final String address = mContacts.getEmail(cursor);
 
-        return new Address(address, name).toString();
+        return (address == null) ? "" : new Address(address, name).toString();
     }
 
     @Override

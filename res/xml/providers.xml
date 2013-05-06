@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (C) 2008 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -106,148 +103,6 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
         <outgoing uri="smtp+ssl+://smtp.gmail.com" username="$email" />
     </provider>
 
-	<!-- FRANCE -->
-    <!-- Note, AOL appears to support SSL on both sides, as well -->
-    <provider id="aim" label="AIM" domain="aim.com">
-        <incoming uri="imap://imap.aim.com" label="IMAP" username="$email" />
-        <outgoing uri="smtp://smtp.aim.com" username="$email" />
-    </provider>
-    <!-- Note, AOL appears to support SSL on both sides, as well -->
-    <provider id="aol" label="AOL" domain="aol.com">
-        <incoming uri="imap://imap.aol.com" label="IMAP" username="$email" />
-        <outgoing uri="smtp://smtp.aol.com" username="$email" />
-    </provider>
-    <provider id="live" label="Windows Live Hotmail Plus" domain="live.com">
-        <incoming uri="pop3+ssl+://pop3.live.com"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.live.com" username="$email" />
-    </provider>
-    <provider id="hotmail" label="Windows Live Hotmail Plus" domain="hotmail.fr">
-        <incoming uri="pop3+ssl+://pop3.live.com"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.live.com" username="$email" />
-    </provider>
-    <provider id="msn" label="Windows Live Hotmail Plus" domain="msn.com">
-        <incoming uri="pop3+ssl+://pop3.live.com"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.live.com" username="$email" />
-    </provider>
-    <provider id="voila" label="Voila Mail" domain="voila.fr">
-        <incoming uri="imap://imap.voila.fr"  username="$email" />
-        <outgoing uri="smtp://smtp.voila.fr" username="$email" />
-    </provider>
-    <provider id="orange" label="Orange" domain="orange.fr">
-        <incoming uri="pop3://pop.orange.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.orange.fr" username="$email" />
-    </provider>
-    <provider id="laposte" label="La Poste" domain="laposte.net">
-        <incoming uri="imap+ssl+://imap.laposte.net"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.laposte.net" username="$email" />
-    </provider>
-    <provider id="wanadoo" label="Wanadoo" domain="wanadoo.fr">
-        <incoming uri="pop3://pop.wanadoo.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.orange.fr" username="$email" />
-    </provider>
-    <provider id="free" label="Free" domain="free.fr">
-        <incoming uri="imap://imap.free.fr"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.free.fr" username="$email" />
-    </provider>
-    <provider id="sfr" label="SFR Mail" domain="sfr.fr">
-        <incoming uri="pop3+ssl+://pop.sfr.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.sfr.fr" username="$email" />
-    </provider>
-    <provider id="cegetel" label="Cegetel" domain="cegetel.net">
-        <incoming uri="pop3+ssl+://pop.sfr.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.sfr.fr" username="$email" />
-    </provider>
-    <provider id="cegetel" label="Cegetel" domain="cegetel.fr">
-        <incoming uri="pop3+ssl+://pop.sfr.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.sfr.fr" username="$email" />
-    </provider>
-    
-    
-    
-    
-    
-    <!-- A TESTER -->
-    <provider id="neuf" label="Neuf Mail" domain="neuf.fr">
-        <incoming uri="pop3+ssl+://pop.neuf.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.sfr.fr" username="$email" />
-    </provider>    
-    <!-- A TESTER -->
-    <provider id="club-internet" label="Club Internet" domain="club-internet.fr">
-        <incoming uri="pop3+ssl+://pop.sfr.fr"  username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.sfr.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="alice" label="Alice" domain="alice.fr">
-        <incoming uri="pop3://pop.alice.fr"  username="$email" />
-        <outgoing uri="smtp.alice.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="noos" label="Noos" domain="Noos.fr">
-        <incoming uri="pop3://pop.noos.fr"  username="$email" />
-        <outgoing uri="mail.noos.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="tele2" label="Tele 2" domain="tele2.fr">
-        <incoming uri="pop3://pop.tele2.fr"  username="$email" />
-        <outgoing uri="smtp.tele2.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="tiscali" label="Tiscali" domain="tiscali.fr">
-        <incoming uri="pop3://pop.tiscali.fr"  username="$email" />
-        <outgoing uri="smtp.tiscali.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="netcourrier" label="Net Courrier" domain="netcourrier.com">
-        <incoming uri="pop3://mail.netcourrier.com"  username="$email" />
-        <outgoing uri="smtp.orange.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="libertysurf" label="Liberty Surf" domain="libertysurf.fr">
-        <incoming uri="pop3://pop.libertysurf.fr"  username="$email" />
-        <outgoing uri="mail.libertysurf.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="caramail" label="Caramail" domain="caramail.com">
-        <incoming uri="pop3://pop.gmx.com"  username="$email" />
-        <outgoing uri="mail.gmx.com" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="caramail" label="Caramail" domain="caramail.fr">
-        <incoming uri="pop3://pop.gmx.com"  username="$email" />
-        <outgoing uri="mail.gmx.com" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="gmx" label="GMX" domain="gmx.com">
-        <incoming uri="pop3://pop.gmx.com"  username="$email" />
-        <outgoing uri="mail.gmx.com" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="gmx" label="GMX" domain="gmx.fr">
-        <incoming uri="pop3://pop.gmx.com"  username="$email" />
-        <outgoing uri="mail.gmx.com" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="bbox" label="BBOX" domain="bbox.fr">
-        <incoming uri="pop3://pop3.bbox.fr"  username="$email" />
-        <outgoing uri="smtp.bouygtel.fr" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="numéricable" label="Numéricable" domain="numericable.fr">
-        <incoming uri="pop3://pop.numericable.fr"  username="$user" />
-        <outgoing uri="smtp://smtp.numericable.fr" username="$user" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="dartybox" label="Darty Box" domain="dartybox.com">
-        <incoming uri="imap+ssl+://pop3.live.com"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.live.com" username="$email" />
-    </provider>
-    <!-- A TESTER -->
-    <provider id="dartybox" label="Darty Box" domain="dbmail.com">
-        <incoming uri="imap+ssl+://pop3.live.com"  username="$email" />
-        <outgoing uri="smtp+tls+://smtp.live.com" username="$email" />
-    </provider>
-    
-
     <!-- USA -->
     <!-- Note, AOL appears to support SSL on both sides, as well -->
     <provider id="aim" label="AIM" domain="aim.com">
@@ -315,23 +170,27 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
         <incoming uri="pop3://incoming.verizon.net" username="$user" />
         <outgoing uri="smtp://outgoing.verizon.net" username="$user" />
     </provider>
+    <provider id="montclair.edu" label="MSU" domain="montclair.edu">
+        <incoming uri="imap+ssl+://mail.montclair.edu" username="$user" />
+        <outgoing uri="smtp+tls+://smtp.montclair.edu" username="$user" />
+    </provider>
+    <provider id="gmx.com" label="GMX" domain="gmx.com">
+        <incoming uri="imap+ssl+://imap.gmx.com" username="$email" />
+        <outgoing uri="smtp+ssl+://mail.gmx.com" username="$email" />
+    </provider>
 
     <!-- Yahoo! Mail Variants -->
     <provider id="yahoo" label="Yahoo" domain="yahoo.com">
-        <incoming uri="imap+tls://imap.mail.yahoo.com" username="$user" />
-        <outgoing uri="smtp+tls://smtp.mobile.mail.yahoo.com" username="$user" />
-    </provider>
-    <provider id="yahoo" label="Yahoo" domain="yahoo.fr" note="@string/provider_note_yahoojp">
-        <incoming uri="pop3+ssl+://pop.mail.yahoo.fr" username="$email" />
-        <outgoing uri="smtp+ssl+://smtp.mail.yahoo.fr" username="$email" />
+        <incoming uri="imap+ssl+://imap.mail.yahoo.com" username="$email" />
+        <outgoing uri="smtp+ssl+://smtp.mail.yahoo.com" username="$email" />
     </provider>
     <provider id="ymail" label="YMail" domain="ymail.com">
-        <incoming uri="imap+tls://imap.mail.yahoo.com" username="$email" />
-        <outgoing uri="smtp+tls://smtp.mobile.mail.yahoo.com" username="$email" />
+        <incoming uri="imap+ssl+://imap.mail.yahoo.com" username="$email" />
+        <outgoing uri="smtp+ssl+://smtp.mail.yahoo.com" username="$email" />
     </provider>
     <provider id="rocketmail" label="Rocketmail" domain="rocketmail.com">
-        <incoming uri="imap+tls://imap.mail.yahoo.com" username="$email" />
-        <outgoing uri="smtp+tls+://smtp.mobile.mail.yahoo.com" username="$email" />
+        <incoming uri="imap+ssl+://imap.mail.yahoo.com" username="$email" />
+        <outgoing uri="smtp+ssl+://smtp.mail.yahoo.com" username="$email" />
     </provider>
 
 
@@ -423,6 +282,11 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
               note="@string/provider_note_yahoojp">
         <incoming uri="pop3+ssl+://pop.mail.yahoo.co.jp"  username="$user" />
         <outgoing uri="smtp://smtp.mail.yahoo.co.jp:587" username="$user" />
+    </provider>
+    <provider id="auone" label="au one" domain="auone.jp"
+              note="@string/provider_note_auonejp">
+        <incoming uri="imap+ssl+://imap.gmail.com" username="$email" />
+        <outgoing uri="smtp+ssl+://smtp.gmail.com" username="$email" />
     </provider>
 
    <!-- Korean -->

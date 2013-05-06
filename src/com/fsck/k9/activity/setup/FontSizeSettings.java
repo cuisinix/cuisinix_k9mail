@@ -7,8 +7,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.*;
-import android.view.Window;
-
 import com.fsck.k9.*;
 import com.fsck.k9.activity.K9PreferenceActivity;
 
@@ -38,6 +36,7 @@ public class FontSizeSettings extends K9PreferenceActivity {
     private static final String PREFERENCE_MESSAGE_VIEW_TIME_FONT = "message_view_time_font";
     private static final String PREFERENCE_MESSAGE_VIEW_DATE_FONT = "message_view_date_font";
     private static final String PREFERENCE_MESSAGE_VIEW_CONTENT_FONT = "message_view_content_font";
+    private static final String PREFERENCE_MESSAGE_COMPOSE_INPUT_FONT = "message_compose_input_font";
 
     private ListPreference mAccountName;
     private ListPreference mAccountDescription;
@@ -55,6 +54,7 @@ public class FontSizeSettings extends K9PreferenceActivity {
     private ListPreference mMessageViewTime;
     private ListPreference mMessageViewDate;
     private ListPreference mMessageViewContent;
+    private ListPreference mMessageComposeInput;
 
 
     /**
@@ -70,7 +70,6 @@ public class FontSizeSettings extends K9PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         FontSizes fontSizes = K9.getFontSizes();
         addPreferencesFromResource(R.xml.font_preferences);
@@ -126,6 +125,10 @@ public class FontSizeSettings extends K9PreferenceActivity {
         mMessageViewContent = setupListPreference(
                                   PREFERENCE_MESSAGE_VIEW_CONTENT_FONT,
                                   Integer.toString(fontSizes.getMessageViewContentAsInt()));
+
+        mMessageComposeInput = setupListPreference(
+                PREFERENCE_MESSAGE_COMPOSE_INPUT_FONT,
+                Integer.toString(fontSizes.getMessageComposeInput()));
     }
 
     /**
@@ -154,6 +157,8 @@ public class FontSizeSettings extends K9PreferenceActivity {
         fontSizes.setMessageViewTime(Integer.parseInt(mMessageViewTime.getValue()));
         fontSizes.setMessageViewDate(Integer.parseInt(mMessageViewDate.getValue()));
         fontSizes.setMessageViewContent(Integer.parseInt(mMessageViewContent.getValue()));
+
+        fontSizes.setMessageComposeInput(Integer.parseInt(mMessageComposeInput.getValue()));
 
         SharedPreferences preferences = Preferences.getPreferences(this).getPreferences();
         Editor editor = preferences.edit();

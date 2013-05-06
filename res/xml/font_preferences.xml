@@ -4,6 +4,9 @@
   Make sure to add android:persistent="false" to all preferences to disable saving
   the preference values to SharedPreferences. We use our own storage mechanism for
   the preferences. See com.fsck.k9.preferences.Storage.
+
+  Also note that every sub-PreferenceScreen needs an "android:key" parameter so the correct screen
+  can be displayed after the device has been rotated.
 -->
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
@@ -157,6 +160,20 @@
             android:entries="@array/font_entries_webview"
             android:entryValues="@array/font_values_webview"
             android:dialogTitle="@string/font_size_message_view_content" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:title="@string/font_size_message_compose"
+        android:key="message_compose_fonts">
+
+        <ListPreference
+            android:persistent="false"
+            android:key="message_compose_input_font"
+            android:title="@string/font_size_message_compose_input"
+            android:entries="@array/font_entries"
+            android:entryValues="@array/font_values"
+            android:dialogTitle="@string/font_size_message_compose_input" />
 
     </PreferenceScreen>
 
