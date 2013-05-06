@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 
 package com.fsck.k9.activity;
 
@@ -25,9 +21,11 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,12 +46,10 @@ import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -61,7 +57,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 import com.fsck.k9.Account;
@@ -110,9 +105,21 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
      */
     private static final Flag[] EMPTY_FLAG_ARRAY = new Flag[0];
 
+    /**
+     * URL used to open Android Market application
+     */
+    private static final String ANDROID_MARKET_URL = "https://market.android.com/search?q=oi+file+manager&c=apps";
+
+    /**
+     * Number of special accounts ('Unified Inbox' and 'All Messages')
+     */
+    private static final int SPECIAL_ACCOUNTS_COUNT = 2;
+
     private static final int DIALOG_REMOVE_ACCOUNT = 1;
     private static final int DIALOG_CLEAR_ACCOUNT = 2;
     private static final int DIALOG_RECREATE_ACCOUNT = 3;
+    private static final int DIALOG_NO_FILE_MANAGER = 4;
+
     private ConcurrentHashMap<String, AccountStats> accountStats = new ConcurrentHashMap<String, AccountStats>();
 
     private ConcurrentHashMap<BaseAccount, String> pendingWork = new ConcurrentHashMap<BaseAccount, String>();
@@ -213,13 +220,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     ActivityListener mListener = new ActivityListener() {
         @Override
         public void informUserOfStatus() {
-        	mHandler.refreshTitle();
-
-        	try{
-                Accounts.this.getCurrentFocus().refreshDrawableState();	
-        	}catch(Exception e){
-        		
-        	}
+            mHandler.refreshTitle();
         }
 
         @Override
@@ -250,12 +251,12 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
             if (account instanceof Account) {
                 mUnreadMessageCount += stats.unreadMessageCount - oldUnreadMessageCount;
             }
-            //mHandler.dataChanged();
+            mHandler.dataChanged();
             pendingWork.remove(account);
 
             if (pendingWork.isEmpty()) {
-            	  mHandler.progress(Window.PROGRESS_END);
-            	  mHandler.refreshTitle();
+                mHandler.progress(Window.PROGRESS_END);
+                mHandler.refreshTitle();
             } else {
                 int level = (Window.PROGRESS_END / mAdapter.getCount()) * (mAdapter.getCount() - pendingWork.size()) ;
                 mHandler.progress(level);
@@ -264,7 +265,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
 
         @Override
         public void accountSizeChanged(Account account, long oldSize, long newSize) {
-        	mHandler.accountSizeChanged(account, oldSize, newSize);
+            mHandler.accountSizeChanged(account, oldSize, newSize);
         }
 
         @Override
@@ -309,7 +310,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     }
 
     public static void listAccounts(Context context) {
-    	Intent intent = new Intent(context, Accounts.class);
+        Intent intent = new Intent(context, Accounts.class);
         intent.putExtra(EXTRA_STARTUP, false);
         context.startActivity(intent);
     }
@@ -333,20 +334,14 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        
-        if (!K9.isHideSpecialAccounts()) {
-            unreadAccount = new SearchAccount(this, false, null, null);
-            unreadAccount.setDescription(getString(R.string.search_all_messages_title));
-            unreadAccount.setEmail(getString(R.string.search_all_messages_detail));
 
-            integratedInboxAccount = new SearchAccount(this, true, null,  null);
-            integratedInboxAccount.setDescription(getString(R.string.integrated_inbox_title));
-            integratedInboxAccount.setEmail(getString(R.string.integrated_inbox_detail));
+        if (!K9.isHideSpecialAccounts()) {
+            createSpecialAccounts();
         }
 
         Account[] accounts = Preferences.getPreferences(this).getAccounts();
         Intent intent = getIntent();
-        onNewIntent(intent);
+        //onNewIntent(intent);
 
         boolean startup = intent.getBooleanExtra(EXTRA_STARTUP, true);
         if (startup && K9.startIntegratedInbox() && !K9.isHideSpecialAccounts()) {
@@ -357,34 +352,19 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
             finish();
             return;
         }
-        
+
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
+
         setContentView(R.layout.accounts);
-        findViewById(R.layout.accounts);
-        ListView listView = (ListView)findViewById(android.R.id.list);
+        ListView listView = getListView();
         listView.setOnItemClickListener(this);
         listView.setItemsCanFocus(false);
         listView.setEmptyView(findViewById(R.id.empty));
-        findViewById(R.id.next).setOnClickListener(this);
         listView.setScrollingCacheEnabled(false);
+        findViewById(R.id.next).setOnClickListener(this);
         registerForContextMenu(listView);
-        
-        findViewById(R.id.search).setOnClickListener(this);
-        findViewById(R.id.compose).setOnClickListener(this);
-        findViewById(R.id.add_new_account).setOnClickListener(this);
-        findViewById(R.id.about).setOnClickListener(this);
-        findViewById(R.id.check_mail).setOnClickListener(this);
-        findViewById(R.id.edit_prefs).setOnClickListener(this);
-        
-        if(accounts.length == 0){
-        	findViewById(R.id.menu_accounts_option).setVisibility(View.GONE);
-        }else{
-        	findViewById(R.id.menu_accounts_option).setVisibility(View.VISIBLE);
-        }
-        
+
         if (icicle != null && icicle.containsKey(SELECTED_CONTEXT_ACCOUNT)) {
             String accountUuid = icicle.getString("selectedContextAccount");
             mSelectedContextAccount = Preferences.getPreferences(this).getAccount(accountUuid);
@@ -397,10 +377,17 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         if (mNonConfigurationInstance != null) {
             mNonConfigurationInstance.restore(this);
         }
-        
     }
 
-	@SuppressWarnings("unchecked")
+    /**
+     * Creates and initializes the special accounts ('Unified Inbox' and 'All Messages')
+     */
+    private void createSpecialAccounts() {
+        integratedInboxAccount = SearchAccount.createUnifiedInboxAccount(this);
+        unreadAccount = SearchAccount.createAllMessagesAccount(this);
+    }
+
+    @SuppressWarnings("unchecked")
     private void restoreAccountStats(Bundle icicle) {
         if (icicle != null) {
             Map<String, AccountStats> oldStats = (Map<String, AccountStats>)icicle.get(ACCOUNT_STATS);
@@ -435,7 +422,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     @Override
     public void onResume() {
         super.onResume();
-     
+
         refresh();
         MessagingController.getInstance(getApplication()).addListener(mListener);
         StorageManager.getInstance(getApplication()).addListener(storageListener);
@@ -479,13 +466,18 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         return accountLocation;
     }
 
+
     private void refresh() {
         accounts = Preferences.getPreferences(this).getAccounts();
-        
+
         List<BaseAccount> newAccounts;
-        if (!K9.isHideSpecialAccounts()
-                && accounts.length > 0) {
-            newAccounts = new ArrayList<BaseAccount>(accounts.length + 2);
+        if (!K9.isHideSpecialAccounts() && accounts.length > 0) {
+            if (integratedInboxAccount == null || unreadAccount == null) {
+                createSpecialAccounts();
+            }
+
+            newAccounts = new ArrayList<BaseAccount>(accounts.length +
+                    SPECIAL_ACCOUNTS_COUNT);
             newAccounts.add(integratedInboxAccount);
             newAccounts.add(unreadAccount);
         } else {
@@ -497,7 +489,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         mAdapter = new AccountsAdapter(newAccounts.toArray(EMPTY_BASE_ACCOUNT_ARRAY));
         getListView().setAdapter(mAdapter);
         if (!newAccounts.isEmpty()) {
-        	mHandler.progress(Window.PROGRESS_START);
+            mHandler.progress(Window.PROGRESS_START);
         }
         pendingWork.clear();
 
@@ -520,11 +512,6 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
             }
         }
 
-        if(accounts.length == 0){
-        	findViewById(R.id.menu_accounts_option).setVisibility(View.GONE);
-        }else{
-        	findViewById(R.id.menu_accounts_option).setVisibility(View.VISIBLE);
-        }
     }
 
     private void onAddNewAccount() {
@@ -919,130 +906,140 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     }
 
     public void onClick(View view) {
-        switch (view.getId()) {
-        case R.id.next:
+        if (view.getId() == R.id.next) {
             onAddNewAccount();
-            break;
-        case R.id.add_new_account:
-            onAddNewAccount();
-            break;
-        case R.id.edit_prefs:
-            onEditPrefs();
-            break;
-        case R.id.check_mail:
-            onCheckMail(null);
-            break;
-        case R.id.compose:
-            onCompose();
-            break;
-        case R.id.about:
-            onAbout();
-            break;
-        case R.id.search:
-            onSearchRequested();
-            break;
-        case R.id.export_all:
-            onExport(true, null);
-            break;
-        case R.id.import_settings:
-            onImport();
-            break;
         }
     }
 
     private void onDeleteAccount(Account account) {
         mSelectedContextAccount = account;
         showDialog(DIALOG_REMOVE_ACCOUNT);
-        Log.i("REMOVE", "REMOVE");
-        Accounts.this.getWindow().getCurrentFocus().refreshDrawableState();
     }
 
     @Override
     public Dialog onCreateDialog(int id) {
+        // Android recreates our dialogs on configuration changes even when they have been
+        // dismissed. Make sure we have all information necessary before creating a new dialog.
         switch (id) {
-        case DIALOG_REMOVE_ACCOUNT:
-            return ConfirmationDialog.create(this, id,
-                                             R.string.account_delete_dlg_title,
-                                             getString(R.string.account_delete_dlg_instructions_fmt,
-                                                     mSelectedContextAccount.getDescription()),
-                                             R.string.okay_action,
-                                             R.string.cancel_action,
-            new Runnable() {
-                @Override
-                public void run() {
-                    if (mSelectedContextAccount instanceof Account) {
-                        Account realAccount = (Account)mSelectedContextAccount;
-                        try {
-                            realAccount.getLocalStore().delete();
-                        } catch (Exception e) {
-                            // Ignore, this may lead to localStores on sd-cards that are
-                            // currently not inserted to be left
-                        }
-                        MessagingController.getInstance(getApplication())
-                        .notifyAccountCancel(Accounts.this, realAccount);
-                        Preferences.getPreferences(Accounts.this).deleteAccount(realAccount);
-                        K9.setServicesEnabled(Accounts.this);
-                        refresh();
-                    }
+            case DIALOG_REMOVE_ACCOUNT: {
+                if (mSelectedContextAccount == null) {
+                    return null;
                 }
-            });
 
-		case DIALOG_CLEAR_ACCOUNT:
-            return ConfirmationDialog.create(this, id,
-                                             R.string.account_clear_dlg_title,
-                                             getString(R.string.account_clear_dlg_instructions_fmt,
-                                                     mSelectedContextAccount.getDescription()),
-                                             R.string.okay_action,
-                                             R.string.cancel_action,
-            new Runnable() {
-                @Override
-                public void run() {
-                    if (mSelectedContextAccount instanceof Account) {
-                        Account realAccount = (Account)mSelectedContextAccount;
-                        //      mHandler.workingAccount(realAccount, R.string.clearing_account);
-                        MessagingController.getInstance(getApplication()).clear(realAccount, null);
-                    }
+                return ConfirmationDialog.create(this, id,
+                        R.string.account_delete_dlg_title,
+                        getString(R.string.account_delete_dlg_instructions_fmt,
+                                mSelectedContextAccount.getDescription()),
+                        R.string.okay_action,
+                        R.string.cancel_action,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mSelectedContextAccount instanceof Account) {
+                                    Account realAccount = (Account) mSelectedContextAccount;
+                                    try {
+                                        realAccount.getLocalStore().delete();
+                                    } catch (Exception e) {
+                                        // Ignore, this may lead to localStores on sd-cards that
+                                        // are currently not inserted to be left
+                                    }
+                                    MessagingController.getInstance(getApplication())
+                                            .notifyAccountCancel(Accounts.this, realAccount);
+                                    Preferences.getPreferences(Accounts.this)
+                                            .deleteAccount(realAccount);
+                                    K9.setServicesEnabled(Accounts.this);
+                                    refresh();
+                                }
+                            }
+                        });
+            }
+            case DIALOG_CLEAR_ACCOUNT: {
+                if (mSelectedContextAccount == null) {
+                    return null;
                 }
-            });
 
-        case DIALOG_RECREATE_ACCOUNT:
-            return ConfirmationDialog.create(this, id,
-                                             R.string.account_recreate_dlg_title,
-                                             getString(R.string.account_recreate_dlg_instructions_fmt,
-                                                     mSelectedContextAccount.getDescription()),
-                                             R.string.okay_action,
-                                             R.string.cancel_action,
-            new Runnable() {
-                @Override
-                public void run() {
-                    if (mSelectedContextAccount instanceof Account) {
-                        Account realAccount = (Account)mSelectedContextAccount;
-                        mHandler.workingAccount(realAccount, R.string.recreating_account);
-                        MessagingController.getInstance(getApplication()).recreate(realAccount, null);
-                    }
+                return ConfirmationDialog.create(this, id,
+                        R.string.account_clear_dlg_title,
+                        getString(R.string.account_clear_dlg_instructions_fmt,
+                                mSelectedContextAccount.getDescription()),
+                        R.string.okay_action,
+                        R.string.cancel_action,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mSelectedContextAccount instanceof Account) {
+                                    Account realAccount = (Account) mSelectedContextAccount;
+                                    mHandler.workingAccount(realAccount,
+                                            R.string.clearing_account);
+                                    MessagingController.getInstance(getApplication())
+                                            .clear(realAccount, null);
+                                }
+                            }
+                        });
+            }
+            case DIALOG_RECREATE_ACCOUNT: {
+                if (mSelectedContextAccount == null) {
+                    return null;
                 }
-            });
+
+                return ConfirmationDialog.create(this, id,
+                        R.string.account_recreate_dlg_title,
+                        getString(R.string.account_recreate_dlg_instructions_fmt,
+                                mSelectedContextAccount.getDescription()),
+                        R.string.okay_action,
+                        R.string.cancel_action,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mSelectedContextAccount instanceof Account) {
+                                    Account realAccount = (Account) mSelectedContextAccount;
+                                    mHandler.workingAccount(realAccount,
+                                            R.string.recreating_account);
+                                    MessagingController.getInstance(getApplication())
+                                            .recreate(realAccount, null);
+                                }
+                            }
+                        });
+            }
+            case DIALOG_NO_FILE_MANAGER: {
+                return ConfirmationDialog.create(this, id,
+                        R.string.import_dialog_error_title,
+                        getString(R.string.import_dialog_error_message),
+                        R.string.open_market,
+                        R.string.close,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                Uri uri = Uri.parse(ANDROID_MARKET_URL);
+                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                startActivity(intent);
+                            }
+                        });
+            }
         }
+
         return super.onCreateDialog(id);
     }
 
     @Override
     public void onPrepareDialog(int id, Dialog d) {
-
         AlertDialog alert = (AlertDialog) d;
         switch (id) {
-        case DIALOG_REMOVE_ACCOUNT:
-            alert.setMessage(getString(R.string.account_delete_dlg_instructions_fmt,
-                                       mSelectedContextAccount.getDescription()));
-            break;
-        case DIALOG_CLEAR_ACCOUNT:
-            alert.setMessage(getString(R.string.account_clear_dlg_instructions_fmt,
-                                       mSelectedContextAccount.getDescription()));
-            break;
-        case DIALOG_RECREATE_ACCOUNT:
-            alert.setMessage(getString(R.string.account_recreate_dlg_instructions_fmt,
-                                       mSelectedContextAccount.getDescription()));
-            break;
+            case DIALOG_REMOVE_ACCOUNT: {
+                alert.setMessage(getString(R.string.account_delete_dlg_instructions_fmt,
+                        mSelectedContextAccount.getDescription()));
+                break;
+            }
+            case DIALOG_CLEAR_ACCOUNT: {
+                alert.setMessage(getString(R.string.account_clear_dlg_instructions_fmt,
+                        mSelectedContextAccount.getDescription()));
+                break;
+            }
+            case DIALOG_RECREATE_ACCOUNT: {
+                alert.setMessage(getString(R.string.account_recreate_dlg_instructions_fmt,
+                        mSelectedContextAccount.getDescription()));
+                break;
+            }
         }
 
         super.onPrepareDialog(id, d);
@@ -1107,7 +1104,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
 
 
     private void onCompact(Account account) {
-    	// mHandler.workingAccount(account, R.string.compacting_account);
+        mHandler.workingAccount(account, R.string.compacting_account);
         MessagingController.getInstance(getApplication()).compact(account, null);
     }
 
@@ -1128,7 +1125,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         BaseAccount account = (BaseAccount)parent.getItemAtPosition(position);
         onOpenAccount(account);
     }
-/*
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -1161,7 +1158,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         }
         return true;
     }
-*/
+
     private static String[][] USED_LIBRARIES = new String[][] {
         new String[] {"jutf7", "http://jutf7.sourceforge.net/"},
         new String[] {"JZlib", "http://www.jcraft.com/jzlib/"},
@@ -1172,7 +1169,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
 
     private void onAbout() {
         String appName = getString(R.string.app_name);
-        String year = "2011";
+        String year = "2012";
         WebView wv = new WebView(this);
         StringBuilder html = new StringBuilder()
         .append("<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />")
@@ -1247,14 +1244,14 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         return true;
     }
-/*
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.accounts_option, menu);
         return true;
     }
-*/
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -1298,7 +1295,16 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType(MimeUtility.K9_SETTINGS_MIME_TYPE);
-        startActivityForResult(Intent.createChooser(i, null), ACTIVITY_REQUEST_PICK_SETTINGS_FILE);
+
+        PackageManager packageManager = getPackageManager();
+        List<ResolveInfo> infos = packageManager.queryIntentActivities(i, 0);
+
+        if (infos.size() > 0) {
+            startActivityForResult(Intent.createChooser(i, null),
+                    ACTIVITY_REQUEST_PICK_SETTINGS_FILE);
+        } else {
+            showDialog(DIALOG_NO_FILE_MANAGER);
+        }
     }
 
     @Override
@@ -1477,8 +1483,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
     private static class ImportSelectionDialog implements NonConfigurationInstance {
         private ImportContents mImportContents;
         private Uri mUri;
-        private Dialog mDialog;
-        private ListView mImportSelectionView;
+        private AlertDialog mDialog;
         private SparseBooleanArray mSelection;
 
 
@@ -1496,8 +1501,7 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         public boolean retain() {
             if (mDialog != null) {
                 // Save the selection state of each list item
-                mSelection = mImportSelectionView.getCheckedItemPositions();
-                mImportSelectionView = null;
+                mSelection = mDialog.getListView().getCheckedItemPositions();
 
                 mDialog.dismiss();
                 mDialog = null;
@@ -1511,8 +1515,6 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
         }
 
         public void show(final Accounts activity, SparseBooleanArray selection) {
-            final ListView importSelectionView = new ListView(activity);
-            mImportSelectionView = importSelectionView;
             List<String> contents = new ArrayList<String>();
 
             if (mImportContents.globalSettings) {
@@ -1523,23 +1525,15 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
                 contents.add(account.name);
             }
 
-            importSelectionView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-            importSelectionView.setAdapter(new ArrayAdapter<String>(activity,
-                    android.R.layout.simple_list_item_checked, contents));
-            importSelectionView.setOnItemSelectedListener(new OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                    CheckedTextView ctv = (CheckedTextView)view;
-                    ctv.setChecked(!ctv.isChecked());
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> arg0) { /* Do nothing */ }
-            });
-
+            int count = contents.size();
+            boolean[] checkedItems = new boolean[count];
             if (selection != null) {
-                for (int i = 0, end = contents.size(); i < end; i++) {
-                    importSelectionView.setItemChecked(i, selection.get(i));
+                for (int i = 0; i < count; i++) {
+                    checkedItems[i] = selection.get(i);
+                }
+            } else {
+                for (int i = 0; i < count; i++) {
+                    checkedItems[i] = true;
                 }
             }
 
@@ -1547,23 +1541,29 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
             //TODO: listview footer: "Select all" / "Select none" buttons?
             //TODO: listview footer: "Overwrite existing accounts?" checkbox
 
+            OnMultiChoiceClickListener listener = new OnMultiChoiceClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                    ((AlertDialog) dialog).getListView().setItemChecked(which, isChecked);
+                }
+            };
+
             final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setMultiChoiceItems(contents.toArray(new String[0]), checkedItems, listener);
             builder.setTitle(activity.getString(R.string.settings_import_selection));
-            builder.setView(importSelectionView);
             builder.setInverseBackgroundForced(true);
             builder.setPositiveButton(R.string.okay_action,
                 new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ListAdapter adapter = importSelectionView.getAdapter();
-                        int count = adapter.getCount();
-                        SparseBooleanArray pos = importSelectionView.getCheckedItemPositions();
+                        ListView listView = ((AlertDialog) dialog).getListView();
+                        SparseBooleanArray pos = listView.getCheckedItemPositions();
 
                         boolean includeGlobals = mImportContents.globalSettings ? pos.get(0) : false;
                         List<String> accountUuids = new ArrayList<String>();
                         int start = mImportContents.globalSettings ? 1 : 0;
-                        for (int i = start; i < count; i++) {
+                        for (int i = start, end = listView.getCount(); i < end; i++) {
                             if (pos.get(i)) {
                                 accountUuids.add(mImportContents.accounts.get(i-start).uuid);
                             }
@@ -1703,8 +1703,8 @@ public class Accounts extends K9ListActivity implements OnItemClickListener, OnC
             }
 
 
-            holder.description.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizes.getAccountName());
-            holder.email.setTextSize(TypedValue.COMPLEX_UNIT_DIP, mFontSizes.getAccountDescription());
+            holder.description.setTextSize(TypedValue.COMPLEX_UNIT_SP, mFontSizes.getAccountName());
+            holder.email.setTextSize(TypedValue.COMPLEX_UNIT_SP, mFontSizes.getAccountDescription());
 
             if (K9.useCompactLayouts()) {
                 holder.accountsItemLayout.setMinimumHeight(0);
