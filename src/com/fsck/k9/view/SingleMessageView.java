@@ -107,7 +107,7 @@ public class SingleMessageView extends LinearLayout {
                 // These content providers use a special cursor that only has
                 // one element,
                 // an integer that is 1 if the screen reader is running.
-                status = cursor.getInt(0);
+                status = cursor.getInt(0);	
                 cursor.close();
                 if (status == 1) {
                     return true;

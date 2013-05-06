@@ -231,7 +231,7 @@ de plus</string>
     <string name="end_of_folder">Aucun message</string>
 
     <string name="accounts_welcome">
-        <b>Bienvenue dans l\'application E-mail de la tablette Cuisinix.</b>
+        <b>Bienvenue dans l\'application E-mail de Cuisinix.</b>
         \n\nCelle-ci est basée sur le client de messagerie Open Source K-9 Mail, développé par Google et l\'équipe des K-9 Dog Walkers.
         \nElle a par la suite été modifiée par nos équipes pour correspondre au mieux aux besoins de votre tablette.
         \n\nVeuillez noter que, dans un souci de simplicité d\'utilisation, nous avons pré-configuré la plupart des types de compte email utilisés en France (Gmail, Hotmail / Live, Free, Wanadoo,...).
