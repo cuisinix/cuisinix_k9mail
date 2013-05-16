@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -56,6 +53,7 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
         android:layout_toLeftOf="@+id/flagged"/>
     <TextView
         android:id="@+id/subject"
+        android:ellipsize="marquee"
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="?android:attr/textColorPrimary"

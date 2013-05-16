@@ -9,7 +9,6 @@ import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -84,7 +83,6 @@ public class AccountSetupOutgoing extends K9Activity implements OnClickListener,
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.account_setup_outgoing);
 
         String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
@@ -241,7 +239,7 @@ public class AccountSetupOutgoing extends K9Activity implements OnClickListener,
             } else {
                 updatePortFromSecurityType();
             }
-            
+
             validateFields();
         } catch (Exception e) {
             /*

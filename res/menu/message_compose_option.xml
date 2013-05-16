@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 	<item
 		android:id="@+id/send"
@@ -34,15 +31,10 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
 		android:icon="@drawable/ic_menu_close_clear_cancel"
 	/>
 	<item
-		android:id="@+id/choose_identity"
-        android:alphabeticShortcut="i"
-		android:title="@string/send_as"
-		android:icon="@drawable/ic_menu_identity"
-	/>
-	<item
 		android:id="@+id/read_receipt"
-	android:alphabeticShortcut="r"
-		android:title="@string/read_receipt"
+        android:alphabeticShortcut="r"
+        android:title="@string/read_receipt"
+        android:icon="@drawable/ic_menu_reply_receipt"
 	/>
 	<item
 		android:id="@+id/add_attachment_image"

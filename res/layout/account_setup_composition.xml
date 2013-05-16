@@ -1,7 +1,4 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -58,7 +55,6 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
             android:id="@+id/account_signature_use"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:checked="true"
             android:text="@string/account_settings_signature_use_label" />
 
         <LinearLayout
@@ -72,23 +68,12 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
                 android:layout_width="fill_parent"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="?android:attr/textColorPrimary" />
-            <WebView 
-                android:id="@+id/signature_visualisation"
-                android:layout_height="100dp"
-                android:layout_width="fill_parent"/>
-            <Button 
-                android:id="@+id/signature_modify"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="@string/account_settings_modify_signature"
-                />
             <EditText
                 android:id="@+id/account_signature"
-                android:inputType="textCapSentences|textAutoCorrect|textMultiLine|textWebEditText"
+                android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
                 android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
-                android:contentDescription="@string/account_settings_signature_label" 
-                android:visibility="gone"/>
+                android:contentDescription="@string/account_settings_signature_label" />
             <TextView
                 android:text="@string/account_settings_signature__location_label"
                 android:layout_height="wrap_content"

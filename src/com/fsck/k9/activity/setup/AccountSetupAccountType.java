@@ -1,15 +1,18 @@
 
 package com.fsck.k9.activity.setup;
 
+
+import java.net.URI;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
+
 import com.fsck.k9.Account;
 import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
@@ -41,7 +44,6 @@ public class AccountSetupAccountType extends K9Activity implements OnClickListen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.account_setup_account_type);
         ((Button)findViewById(R.id.pop)).setOnClickListener(this);
         ((Button)findViewById(R.id.imap)).setOnClickListener(this);

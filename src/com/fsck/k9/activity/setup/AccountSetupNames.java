@@ -9,11 +9,13 @@ import android.text.TextWatcher;
 import android.text.method.TextKeyListener;
 import android.text.method.TextKeyListener.Capitalize;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import com.fsck.k9.*;
+
+import com.fsck.k9.Account;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.R;
 import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.helper.Utility;
 
@@ -37,7 +39,6 @@ public class AccountSetupNames extends K9Activity implements OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.account_setup_names);
         mDescription = (EditText)findViewById(R.id.account_description);
         mName = (EditText)findViewById(R.id.account_name);

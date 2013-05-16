@@ -22,9 +22,6 @@ Antoine Aflalo ( antoineaf<AT>gmail<DOT>com )
 Editor:
 ArtfulBits Inc. (c) 2005-2009 (http://www.artfulbits.com)
 Android Localizer (aiLocalizer)
-
-Modified by :
-Pierre GALERNEAU for Cuisinix
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">Cuisinix Mail</string>

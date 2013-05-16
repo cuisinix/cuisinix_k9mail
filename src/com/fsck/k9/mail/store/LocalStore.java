@@ -35,6 +35,7 @@ import com.fsck.k9.AccountStats;
 import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
+import com.fsck.k9.Account.MessageFormat;
 import com.fsck.k9.controller.MessageRemovalListener;
 import com.fsck.k9.controller.MessageRetrievalListener;
 import com.fsck.k9.helper.Utility;
@@ -55,6 +56,7 @@ import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
+import com.fsck.k9.mail.internet.MimeUtility.ViewableContainer;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mail.store.LockableDatabase.DbCallback;
 import com.fsck.k9.mail.store.LockableDatabase.WrappedException;
@@ -154,230 +156,233 @@ public class LocalStore extends Store implements Serializable {
 
             AttachmentProvider.clear(mApplication);
 
+            db.beginTransaction();
             try {
-                // schema version 29 was when we moved to incremental updates
-                // in the case of a new db or a < v29 db, we blow away and start from scratch
-                if (db.getVersion() < 29) {
+                try {
+                    // schema version 29 was when we moved to incremental updates
+                    // in the case of a new db or a < v29 db, we blow away and start from scratch
+                    if (db.getVersion() < 29) {
 
-                    db.execSQL("DROP TABLE IF EXISTS folders");
-                    db.execSQL("CREATE TABLE folders (id INTEGER PRIMARY KEY, name TEXT, "
-                               + "last_updated INTEGER, unread_count INTEGER, visible_limit INTEGER, status TEXT, "
-                               + "push_state TEXT, last_pushed INTEGER, flagged_count INTEGER default 0, "
-                               + "integrate INTEGER, top_group INTEGER, poll_class TEXT, push_class TEXT, display_class TEXT"
-                               + ")");
+                        db.execSQL("DROP TABLE IF EXISTS folders");
+                        db.execSQL("CREATE TABLE folders (id INTEGER PRIMARY KEY, name TEXT, "
+                                   + "last_updated INTEGER, unread_count INTEGER, visible_limit INTEGER, status TEXT, "
+                                   + "push_state TEXT, last_pushed INTEGER, flagged_count INTEGER default 0, "
+                                   + "integrate INTEGER, top_group INTEGER, poll_class TEXT, push_class TEXT, display_class TEXT"
+                                   + ")");
 
-                    db.execSQL("CREATE INDEX IF NOT EXISTS folder_name ON folders (name)");
-                    db.execSQL("DROP TABLE IF EXISTS messages");
-                    db.execSQL("CREATE TABLE messages (id INTEGER PRIMARY KEY, deleted INTEGER default 0, folder_id INTEGER, uid TEXT, subject TEXT, "
-                               + "date INTEGER, flags TEXT, sender_list TEXT, to_list TEXT, cc_list TEXT, bcc_list TEXT, reply_to_list TEXT, "
-                               + "html_content TEXT, text_content TEXT, attachment_count INTEGER, internal_date INTEGER, message_id TEXT, preview TEXT, "
-                               + "mime_type TEXT)");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS folder_name ON folders (name)");
+                        db.execSQL("DROP TABLE IF EXISTS messages");
+                        db.execSQL("CREATE TABLE messages (id INTEGER PRIMARY KEY, deleted INTEGER default 0, folder_id INTEGER, uid TEXT, subject TEXT, "
+                                   + "date INTEGER, flags TEXT, sender_list TEXT, to_list TEXT, cc_list TEXT, bcc_list TEXT, reply_to_list TEXT, "
+                                   + "html_content TEXT, text_content TEXT, attachment_count INTEGER, internal_date INTEGER, message_id TEXT, preview TEXT, "
+                                   + "mime_type TEXT)");
 
-                    db.execSQL("DROP TABLE IF EXISTS headers");
-                    db.execSQL("CREATE TABLE headers (id INTEGER PRIMARY KEY, message_id INTEGER, name TEXT, value TEXT)");
-                    db.execSQL("CREATE INDEX IF NOT EXISTS header_folder ON headers (message_id)");
+                        db.execSQL("DROP TABLE IF EXISTS headers");
+                        db.execSQL("CREATE TABLE headers (id INTEGER PRIMARY KEY, message_id INTEGER, name TEXT, value TEXT)");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS header_folder ON headers (message_id)");
 
-                    db.execSQL("CREATE INDEX IF NOT EXISTS msg_uid ON messages (uid, folder_id)");
-                    db.execSQL("DROP INDEX IF EXISTS msg_folder_id");
-                    db.execSQL("DROP INDEX IF EXISTS msg_folder_id_date");
-                    db.execSQL("CREATE INDEX IF NOT EXISTS msg_folder_id_deleted_date ON messages (folder_id,deleted,internal_date)");
-                    db.execSQL("DROP TABLE IF EXISTS attachments");
-                    db.execSQL("CREATE TABLE attachments (id INTEGER PRIMARY KEY, message_id INTEGER,"
-                               + "store_data TEXT, content_uri TEXT, size INTEGER, name TEXT,"
-                               + "mime_type TEXT, content_id TEXT, content_disposition TEXT)");
-
-                    db.execSQL("DROP TABLE IF EXISTS pending_commands");
-                    db.execSQL("CREATE TABLE pending_commands " +
-                               "(id INTEGER PRIMARY KEY, command TEXT, arguments TEXT)");
-
-                    db.execSQL("DROP TRIGGER IF EXISTS delete_folder");
-                    db.execSQL("CREATE TRIGGER delete_folder BEFORE DELETE ON folders BEGIN DELETE FROM messages WHERE old.id = folder_id; END;");
-
-                    db.execSQL("DROP TRIGGER IF EXISTS delete_message");
-                    db.execSQL("CREATE TRIGGER delete_message BEFORE DELETE ON messages BEGIN DELETE FROM attachments WHERE old.id = message_id; "
-                               + "DELETE FROM headers where old.id = message_id; END;");
-                } else {
-                    // in the case that we're starting out at 29 or newer, run all the needed updates
-
-                    if (db.getVersion() < 30) {
-                        try {
-                            db.execSQL("ALTER TABLE messages ADD deleted INTEGER default 0");
-                        } catch (SQLiteException e) {
-                            if (! e.toString().startsWith("duplicate column name: deleted")) {
-                                throw e;
-                            }
-                        }
-                    }
-                    if (db.getVersion() < 31) {
+                        db.execSQL("CREATE INDEX IF NOT EXISTS msg_uid ON messages (uid, folder_id)");
+                        db.execSQL("DROP INDEX IF EXISTS msg_folder_id");
                         db.execSQL("DROP INDEX IF EXISTS msg_folder_id_date");
                         db.execSQL("CREATE INDEX IF NOT EXISTS msg_folder_id_deleted_date ON messages (folder_id,deleted,internal_date)");
-                    }
-                    if (db.getVersion() < 32) {
-                        db.execSQL("UPDATE messages SET deleted = 1 WHERE flags LIKE '%DELETED%'");
-                    }
-                    if (db.getVersion() < 33) {
+                        db.execSQL("DROP TABLE IF EXISTS attachments");
+                        db.execSQL("CREATE TABLE attachments (id INTEGER PRIMARY KEY, message_id INTEGER,"
+                                   + "store_data TEXT, content_uri TEXT, size INTEGER, name TEXT,"
+                                   + "mime_type TEXT, content_id TEXT, content_disposition TEXT)");
 
-                        try {
-                            db.execSQL("ALTER TABLE messages ADD preview TEXT");
-                        } catch (SQLiteException e) {
-                            if (! e.toString().startsWith("duplicate column name: preview")) {
-                                throw e;
-                            }
-                        }
+                        db.execSQL("DROP TABLE IF EXISTS pending_commands");
+                        db.execSQL("CREATE TABLE pending_commands " +
+                                   "(id INTEGER PRIMARY KEY, command TEXT, arguments TEXT)");
 
-                    }
-                    if (db.getVersion() < 34) {
-                        try {
-                            db.execSQL("ALTER TABLE folders ADD flagged_count INTEGER default 0");
-                        } catch (SQLiteException e) {
-                            if (! e.getMessage().startsWith("duplicate column name: flagged_count")) {
-                                throw e;
-                            }
-                        }
-                    }
-                    if (db.getVersion() < 35) {
-                        try {
-                            db.execSQL("update messages set flags = replace(flags, 'X_NO_SEEN_INFO', 'X_BAD_FLAG')");
-                        } catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Unable to get rid of obsolete flag X_NO_SEEN_INFO", e);
-                        }
-                    }
-                    if (db.getVersion() < 36) {
-                        try {
-                            db.execSQL("ALTER TABLE attachments ADD content_id TEXT");
-                        } catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Unable to add content_id column to attachments");
-                        }
-                    }
-                    if (db.getVersion() < 37) {
-                        try {
-                            db.execSQL("ALTER TABLE attachments ADD content_disposition TEXT");
-                        } catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Unable to add content_disposition column to attachments");
-                        }
-                    }
+                        db.execSQL("DROP TRIGGER IF EXISTS delete_folder");
+                        db.execSQL("CREATE TRIGGER delete_folder BEFORE DELETE ON folders BEGIN DELETE FROM messages WHERE old.id = folder_id; END;");
 
-                    // Database version 38 is solely to prune cached attachments now that we clear them better
-                    if (db.getVersion() < 39) {
-                        try {
-                            db.execSQL("DELETE FROM headers WHERE id in (SELECT headers.id FROM headers LEFT JOIN messages ON headers.message_id = messages.id WHERE messages.id IS NULL)");
-                        } catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Unable to remove extra header data from the database");
-                        }
-                    }
+                        db.execSQL("DROP TRIGGER IF EXISTS delete_message");
+                        db.execSQL("CREATE TRIGGER delete_message BEFORE DELETE ON messages BEGIN DELETE FROM attachments WHERE old.id = message_id; "
+                                   + "DELETE FROM headers where old.id = message_id; END;");
+                    } else {
+                        // in the case that we're starting out at 29 or newer, run all the needed updates
 
-                    // V40: Store the MIME type for a message.
-                    if (db.getVersion() < 40) {
-                        try {
-                            db.execSQL("ALTER TABLE messages ADD mime_type TEXT");
-                        } catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Unable to add mime_type column to messages");
-                        }
-                    }
-
-                    if (db.getVersion() < 41) {
-                        try {
-                            db.execSQL("ALTER TABLE folders ADD integrate INTEGER");
-                            db.execSQL("ALTER TABLE folders ADD top_group INTEGER");
-                            db.execSQL("ALTER TABLE folders ADD poll_class TEXT");
-                            db.execSQL("ALTER TABLE folders ADD push_class TEXT");
-                            db.execSQL("ALTER TABLE folders ADD display_class TEXT");
-                        } catch (SQLiteException e) {
-                            if (! e.getMessage().startsWith("duplicate column name:")) {
-                                throw e;
-                            }
-                        }
-                        Cursor cursor = null;
-
-                        try {
-
-                            SharedPreferences prefs = getPreferences();
-                            cursor = db.rawQuery("SELECT id, name FROM folders", null);
-                            while (cursor.moveToNext()) {
-                                try {
-                                    int id = cursor.getInt(0);
-                                    String name = cursor.getString(1);
-                                    update41Metadata(db, prefs, id, name);
-                                } catch (Exception e) {
-                                    Log.e(K9.LOG_TAG, " error trying to ugpgrade a folder class", e);
+                        if (db.getVersion() < 30) {
+                            try {
+                                db.execSQL("ALTER TABLE messages ADD deleted INTEGER default 0");
+                            } catch (SQLiteException e) {
+                                if (! e.toString().startsWith("duplicate column name: deleted")) {
+                                    throw e;
                                 }
                             }
                         }
-
-
-                        catch (SQLiteException e) {
-                            Log.e(K9.LOG_TAG, "Exception while upgrading database to v41. folder classes may have vanished", e);
-
-                        } finally {
-                            Utility.closeQuietly(cursor);
+                        if (db.getVersion() < 31) {
+                            db.execSQL("DROP INDEX IF EXISTS msg_folder_id_date");
+                            db.execSQL("CREATE INDEX IF NOT EXISTS msg_folder_id_deleted_date ON messages (folder_id,deleted,internal_date)");
                         }
-                    }
-                    if (db.getVersion() == 41) {
-                        try {
-                            long startTime = System.currentTimeMillis();
-                            SharedPreferences.Editor editor = getPreferences().edit();
+                        if (db.getVersion() < 32) {
+                            db.execSQL("UPDATE messages SET deleted = 1 WHERE flags LIKE '%DELETED%'");
+                        }
+                        if (db.getVersion() < 33) {
 
-                            List <? extends Folder >  folders = getPersonalNamespaces(true);
-                            for (Folder folder : folders) {
-                                if (folder instanceof LocalFolder) {
-                                    LocalFolder lFolder = (LocalFolder)folder;
-                                    lFolder.save(editor);
+                            try {
+                                db.execSQL("ALTER TABLE messages ADD preview TEXT");
+                            } catch (SQLiteException e) {
+                                if (! e.toString().startsWith("duplicate column name: preview")) {
+                                    throw e;
                                 }
                             }
 
-                            editor.commit();
-                            long endTime = System.currentTimeMillis();
-                            Log.i(K9.LOG_TAG, "Putting folder preferences for " + folders.size() + " folders back into Preferences took " + (endTime - startTime) + " ms");
-                        } catch (Exception e) {
-                            Log.e(K9.LOG_TAG, "Could not replace Preferences in upgrade from DB_VERSION 41", e);
                         }
-                    }
-                    if (db.getVersion() < 43) {
-                        try {
-                            // If folder "OUTBOX" (old, v3.800 - v3.802) exists, rename it to
-                            // "K9MAIL_INTERNAL_OUTBOX" (new)
-                            LocalFolder oldOutbox = new LocalFolder("OUTBOX");
-                            if (oldOutbox.exists()) {
-                                ContentValues cv = new ContentValues();
-                                cv.put("name", Account.OUTBOX);
-                                db.update("folders", cv, "name = ?", new String[] { "OUTBOX" });
-                                Log.i(K9.LOG_TAG, "Renamed folder OUTBOX to " + Account.OUTBOX);
+                        if (db.getVersion() < 34) {
+                            try {
+                                db.execSQL("ALTER TABLE folders ADD flagged_count INTEGER default 0");
+                            } catch (SQLiteException e) {
+                                if (! e.getMessage().startsWith("duplicate column name: flagged_count")) {
+                                    throw e;
+                                }
+                            }
+                        }
+                        if (db.getVersion() < 35) {
+                            try {
+                                db.execSQL("update messages set flags = replace(flags, 'X_NO_SEEN_INFO', 'X_BAD_FLAG')");
+                            } catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Unable to get rid of obsolete flag X_NO_SEEN_INFO", e);
+                            }
+                        }
+                        if (db.getVersion() < 36) {
+                            try {
+                                db.execSQL("ALTER TABLE attachments ADD content_id TEXT");
+                            } catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Unable to add content_id column to attachments");
+                            }
+                        }
+                        if (db.getVersion() < 37) {
+                            try {
+                                db.execSQL("ALTER TABLE attachments ADD content_disposition TEXT");
+                            } catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Unable to add content_disposition column to attachments");
+                            }
+                        }
+
+                        // Database version 38 is solely to prune cached attachments now that we clear them better
+                        if (db.getVersion() < 39) {
+                            try {
+                                db.execSQL("DELETE FROM headers WHERE id in (SELECT headers.id FROM headers LEFT JOIN messages ON headers.message_id = messages.id WHERE messages.id IS NULL)");
+                            } catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Unable to remove extra header data from the database");
+                            }
+                        }
+
+                        // V40: Store the MIME type for a message.
+                        if (db.getVersion() < 40) {
+                            try {
+                                db.execSQL("ALTER TABLE messages ADD mime_type TEXT");
+                            } catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Unable to add mime_type column to messages");
+                            }
+                        }
+
+                        if (db.getVersion() < 41) {
+                            try {
+                                db.execSQL("ALTER TABLE folders ADD integrate INTEGER");
+                                db.execSQL("ALTER TABLE folders ADD top_group INTEGER");
+                                db.execSQL("ALTER TABLE folders ADD poll_class TEXT");
+                                db.execSQL("ALTER TABLE folders ADD push_class TEXT");
+                                db.execSQL("ALTER TABLE folders ADD display_class TEXT");
+                            } catch (SQLiteException e) {
+                                if (! e.getMessage().startsWith("duplicate column name:")) {
+                                    throw e;
+                                }
+                            }
+                            Cursor cursor = null;
+
+                            try {
+
+                                SharedPreferences prefs = getPreferences();
+                                cursor = db.rawQuery("SELECT id, name FROM folders", null);
+                                while (cursor.moveToNext()) {
+                                    try {
+                                        int id = cursor.getInt(0);
+                                        String name = cursor.getString(1);
+                                        update41Metadata(db, prefs, id, name);
+                                    } catch (Exception e) {
+                                        Log.e(K9.LOG_TAG, " error trying to ugpgrade a folder class", e);
+                                    }
+                                }
                             }
 
-                            // Check if old (pre v3.800) localized outbox folder exists
-                            String localizedOutbox = K9.app.getString(R.string.special_mailbox_name_outbox);
-                            LocalFolder obsoleteOutbox = new LocalFolder(localizedOutbox);
-                            if (obsoleteOutbox.exists()) {
-                                // Get all messages from the localized outbox ...
-                                Message[] messages = obsoleteOutbox.getMessages(null, false);
 
-                                if (messages.length > 0) {
-                                    // ... and move them to the drafts folder (we don't want to
-                                    // surprise the user by sending potentially very old messages)
-                                    LocalFolder drafts = new LocalFolder(mAccount.getDraftsFolderName());
-                                    obsoleteOutbox.moveMessages(messages, drafts);
+                            catch (SQLiteException e) {
+                                Log.e(K9.LOG_TAG, "Exception while upgrading database to v41. folder classes may have vanished", e);
+
+                            } finally {
+                                Utility.closeQuietly(cursor);
+                            }
+                        }
+                        if (db.getVersion() == 41) {
+                            try {
+                                long startTime = System.currentTimeMillis();
+                                SharedPreferences.Editor editor = getPreferences().edit();
+
+                                List <? extends Folder >  folders = getPersonalNamespaces(true);
+                                for (Folder folder : folders) {
+                                    if (folder instanceof LocalFolder) {
+                                        LocalFolder lFolder = (LocalFolder)folder;
+                                        lFolder.save(editor);
+                                    }
                                 }
 
-                                // Now get rid of the localized outbox
-                                obsoleteOutbox.delete();
-                                obsoleteOutbox.delete(true);
+                                editor.commit();
+                                long endTime = System.currentTimeMillis();
+                                Log.i(K9.LOG_TAG, "Putting folder preferences for " + folders.size() + " folders back into Preferences took " + (endTime - startTime) + " ms");
+                            } catch (Exception e) {
+                                Log.e(K9.LOG_TAG, "Could not replace Preferences in upgrade from DB_VERSION 41", e);
                             }
-                        } catch (Exception e) {
-                            Log.e(K9.LOG_TAG, "Error trying to fix the outbox folders", e);
+                        }
+                        if (db.getVersion() < 43) {
+                            try {
+                                // If folder "OUTBOX" (old, v3.800 - v3.802) exists, rename it to
+                                // "K9MAIL_INTERNAL_OUTBOX" (new)
+                                LocalFolder oldOutbox = new LocalFolder("OUTBOX");
+                                if (oldOutbox.exists()) {
+                                    ContentValues cv = new ContentValues();
+                                    cv.put("name", Account.OUTBOX);
+                                    db.update("folders", cv, "name = ?", new String[] { "OUTBOX" });
+                                    Log.i(K9.LOG_TAG, "Renamed folder OUTBOX to " + Account.OUTBOX);
+                                }
+
+                                // Check if old (pre v3.800) localized outbox folder exists
+                                String localizedOutbox = K9.app.getString(R.string.special_mailbox_name_outbox);
+                                LocalFolder obsoleteOutbox = new LocalFolder(localizedOutbox);
+                                if (obsoleteOutbox.exists()) {
+                                    // Get all messages from the localized outbox ...
+                                    Message[] messages = obsoleteOutbox.getMessages(null, false);
+
+                                    if (messages.length > 0) {
+                                        // ... and move them to the drafts folder (we don't want to
+                                        // surprise the user by sending potentially very old messages)
+                                        LocalFolder drafts = new LocalFolder(mAccount.getDraftsFolderName());
+                                        obsoleteOutbox.moveMessages(messages, drafts);
+                                    }
+
+                                    // Now get rid of the localized outbox
+                                    obsoleteOutbox.delete();
+                                    obsoleteOutbox.delete(true);
+                                }
+                            } catch (Exception e) {
+                                Log.e(K9.LOG_TAG, "Error trying to fix the outbox folders", e);
+                            }
                         }
                     }
+                } catch (SQLiteException e) {
+                    Log.e(K9.LOG_TAG, "Exception while upgrading database. Resetting the DB to v0");
+                    db.setVersion(0);
+                    throw new Error("Database upgrade failed! Resetting your DB version to 0 to force a full schema recreation.");
                 }
+
+                db.setVersion(DB_VERSION);
+
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
             }
-
-            catch (SQLiteException e) {
-                Log.e(K9.LOG_TAG, "Exception while upgrading database. Resetting the DB to v0");
-                db.setVersion(0);
-                throw new Error("Database upgrade failed! Resetting your DB version to 0 to force a full schema recreation.");
-            }
-
-
-
-            db.setVersion(DB_VERSION);
 
             if (db.getVersion() != DB_VERSION) {
                 throw new Error("Database upgrade failed!");
@@ -1586,23 +1591,26 @@ public class LocalStore extends Store implements Serializable {
                                                 MimeBodyPart bp = new MimeBodyPart(body, "text/plain");
                                                 mp.addBodyPart(bp);
                                             }
-                                            if (htmlContent != null) {
-                                                TextBody body = new TextBody(htmlContent);
-                                                MimeBodyPart bp = new MimeBodyPart(body, "text/html");
-                                                mp.addBodyPart(bp);
-                                            }
 
-                                            // If we have both text and html content and our MIME type
-                                            // isn't multipart/alternative, then corral them into a new
-                                            // multipart/alternative part and put that into the parent.
-                                            // If it turns out that this is the only part in the parent
-                                            // MimeMultipart, it'll get fixed below before we attach to
-                                            // the message.
-                                            if (textContent != null && htmlContent != null && !mimeType.equalsIgnoreCase("multipart/alternative")) {
-                                                MimeMultipart alternativeParts = mp;
-                                                alternativeParts.setSubType("alternative");
-                                                mp = new MimeMultipart();
-                                                mp.addBodyPart(new MimeBodyPart(alternativeParts));
+                                            if (mAccount.getMessageFormat() != MessageFormat.TEXT) {
+                                                if (htmlContent != null) {
+                                                    TextBody body = new TextBody(htmlContent);
+                                                    MimeBodyPart bp = new MimeBodyPart(body, "text/html");
+                                                    mp.addBodyPart(bp);
+                                                }
+
+                                                // If we have both text and html content and our MIME type
+                                                // isn't multipart/alternative, then corral them into a new
+                                                // multipart/alternative part and put that into the parent.
+                                                // If it turns out that this is the only part in the parent
+                                                // MimeMultipart, it'll get fixed below before we attach to
+                                                // the message.
+                                                if (textContent != null && htmlContent != null && !mimeType.equalsIgnoreCase("multipart/alternative")) {
+                                                    MimeMultipart alternativeParts = mp;
+                                                    alternativeParts.setSubType("alternative");
+                                                    mp = new MimeMultipart();
+                                                    mp.addBodyPart(new MimeBodyPart(alternativeParts));
+                                                }
                                             }
                                         } else if (mimeType != null && mimeType.equalsIgnoreCase("text/plain")) {
                                             // If it's text, add only the plain part. The MIME
@@ -1691,6 +1699,12 @@ public class LocalStore extends Store implements Serializable {
                                                                            contentDisposition,
                                                                            name, // TODO: Should use encoded word defined in RFC 2231.
                                                                            size));
+                                            } else {
+                                                bp.setHeader(MimeHeader.HEADER_CONTENT_TYPE, type);
+                                                bp.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION,
+                                                        String.format("%s;\n size=%d",
+                                                                      contentDisposition,
+                                                                      size));
                                             }
 
                                             bp.setHeader(MimeHeader.HEADER_CONTENT_ID, contentId);
@@ -1798,6 +1812,39 @@ public class LocalStore extends Store implements Serializable {
             });
         }
 
+        public String getMessageUidById(final long id) throws MessagingException {
+            try {
+                return database.execute(false, new DbCallback<String>() {
+                    @Override
+                    public String doDbWork(final SQLiteDatabase db) throws WrappedException, UnavailableStorageException {
+                        try {
+                            open(OpenMode.READ_WRITE);
+                            Cursor cursor = null;
+
+                            try {
+                                cursor = db.rawQuery(
+                                             "SELECT uid FROM messages " +
+                                              "WHERE id = ? AND folder_id = ?",
+                                             new String[] {
+                                                 Long.toString(id), Long.toString(mFolderId)
+                                             });
+                                if (!cursor.moveToNext()) {
+                                    return null;
+                                }
+                                return cursor.getString(0);
+                            } finally {
+                                Utility.closeQuietly(cursor);
+                            }
+                        } catch (MessagingException e) {
+                            throw new WrappedException(e);
+                        }
+                    }
+                });
+            } catch (WrappedException e) {
+                throw(MessagingException) e.getCause();
+            }
+        }
+
         @Override
         public Message getMessage(final String uid) throws MessagingException {
             try {
@@ -1888,20 +1935,22 @@ public class LocalStore extends Store implements Serializable {
         }
 
         @Override
-        public void copyMessages(Message[] msgs, Folder folder) throws MessagingException {
+        public Map<String, String> copyMessages(Message[] msgs, Folder folder) throws MessagingException {
             if (!(folder instanceof LocalFolder)) {
                 throw new MessagingException("copyMessages called with incorrect Folder");
             }
-            ((LocalFolder) folder).appendMessages(msgs, true);
+            return ((LocalFolder) folder).appendMessages(msgs, true);
         }
 
         @Override
-        public void moveMessages(final Message[] msgs, final Folder destFolder) throws MessagingException {
+        public Map<String, String> moveMessages(final Message[] msgs, final Folder destFolder) throws MessagingException {
             if (!(destFolder instanceof LocalFolder)) {
                 throw new MessagingException("moveMessages called with non-LocalFolder");
             }
 
             final LocalFolder lDestFolder = (LocalFolder)destFolder;
+
+            final Map<String, String> uidMap = new HashMap<String, String>();
 
             try {
                 database.execute(false, new DbCallback<Void>() {
@@ -1928,7 +1977,10 @@ public class LocalStore extends Store implements Serializable {
                                     Log.d(K9.LOG_TAG, "Updating folder_id to " + lDestFolder.getId() + " for message with UID "
                                           + message.getUid() + ", id " + lMessage.getId() + " currently in folder " + getName());
 
-                                message.setUid(K9.LOCAL_UID_PREFIX + UUID.randomUUID().toString());
+                                String newUid = K9.LOCAL_UID_PREFIX + UUID.randomUUID().toString();
+                                message.setUid(newUid);
+
+                                uidMap.put(oldUID, newUid);
 
                                 db.execSQL("UPDATE messages " + "SET folder_id = ?, uid = ? " + "WHERE id = ?", new Object[] {
                                                lDestFolder.getId(),
@@ -1936,6 +1988,11 @@ public class LocalStore extends Store implements Serializable {
                                                lMessage.getId()
                                            });
 
+                                /*
+                                 * Add a placeholder message so we won't download the original
+                                 * message again if we synchronize before the remote move is
+                                 * complete.
+                                 */
                                 LocalMessage placeHolder = new LocalMessage(oldUID, LocalFolder.this);
                                 placeHolder.setFlagInternal(Flag.DELETED, true);
                                 placeHolder.setFlagInternal(Flag.SEEN, true);
@@ -1947,6 +2004,7 @@ public class LocalStore extends Store implements Serializable {
                         return null;
                     }
                 });
+                return uidMap;
             } catch (WrappedException e) {
                 throw(MessagingException) e.getCause();
             }
@@ -1992,8 +2050,8 @@ public class LocalStore extends Store implements Serializable {
          * message, retrieve the appropriate local message instance first (if it already exists).
          */
         @Override
-        public void appendMessages(Message[] messages) throws MessagingException {
-            appendMessages(messages, false);
+        public Map<String, String> appendMessages(Message[] messages) throws MessagingException {
+            return appendMessages(messages, false);
         }
 
         public void destroyMessages(final Message[] messages) throws MessagingException {
@@ -2019,9 +2077,9 @@ public class LocalStore extends Store implements Serializable {
 
         /**
          * The method differs slightly from the contract; If an incoming message already has a uid
-         * assigned and it matches the uid of an existing message then this message will replace the
-         * old message. It is implemented as a delete/insert. This functionality is used in saving
-         * of drafts and re-synchronization of updated server messages.
+         * assigned and it matches the uid of an existing message then this message will replace
+         * the old message. This functionality is used in saving of drafts and re-synchronization
+         * of updated server messages.
          *
          * NOTE that although this method is located in the LocalStore class, it is not guaranteed
          * that the messages supplied as parameters are actually {@link LocalMessage} instances (in
@@ -2029,10 +2087,12 @@ public class LocalStore extends Store implements Serializable {
          * message, retrieve the appropriate local message instance first (if it already exists).
          * @param messages
          * @param copy
+         * @return Map<String, String> uidMap of srcUids -> destUids
          */
-        private void appendMessages(final Message[] messages, final boolean copy) throws MessagingException {
+        private Map<String, String> appendMessages(final Message[] messages, final boolean copy) throws MessagingException {
             open(OpenMode.READ_WRITE);
             try {
+                final Map<String, String> uidMap = new HashMap<String, String>();
                 database.execute(true, new DbCallback<Void>() {
                     @Override
                     public Void doDbWork(final SQLiteDatabase db) throws WrappedException, UnavailableStorageException {
@@ -2042,68 +2102,70 @@ public class LocalStore extends Store implements Serializable {
                                     throw new Error("LocalStore can only store Messages that extend MimeMessage");
                                 }
 
+                                long oldMessageId = -1;
                                 String uid = message.getUid();
                                 if (uid == null || copy) {
-                                    uid = K9.LOCAL_UID_PREFIX + UUID.randomUUID().toString();
-                                    if (!copy) {
-                                        message.setUid(uid);
-                                    }
-                                } else {
-                                    Message oldMessage = getMessage(uid);
-                                    if (oldMessage != null && !oldMessage.isSet(Flag.SEEN)) {
-                                        setUnreadMessageCount(getUnreadMessageCount() - 1);
-                                    }
-                                    if (oldMessage != null && oldMessage.isSet(Flag.FLAGGED)) {
-                                        setFlaggedMessageCount(getFlaggedMessageCount() - 1);
-                                    }
                                     /*
-                                     * The message may already exist in this Folder, so delete it first.
+                                     * Create a new message in the database
                                      */
-                                    deleteAttachments(message.getUid());
-                                    db.execSQL("DELETE FROM messages WHERE folder_id = ? AND uid = ?",
-                                               new Object[]
-                                               { mFolderId, message.getUid() });
-                                }
+                                    String randomLocalUid = K9.LOCAL_UID_PREFIX +
+                                            UUID.randomUUID().toString();
 
-                                ArrayList<Part> viewables = new ArrayList<Part>();
-                                ArrayList<Part> attachments = new ArrayList<Part>();
-                                MimeUtility.collectParts(message, viewables, attachments);
-
-                                StringBuilder sbHtml = new StringBuilder();
-                                StringBuilder sbText = new StringBuilder();
-                                for (Part viewable : viewables) {
-                                    try {
-                                        String text = MimeUtility.getTextFromPart(viewable);
-
-                                        /*
-                                         * Small hack to make sure the string "null" doesn't end up
-                                         * in one of the StringBuilders.
-                                         */
-                                        if (text == null) {
-                                            text = "";
-                                        }
-
-                                        /*
-                                         * Anything with MIME type text/html will be stored as such. Anything
-                                         * else will be stored as text/plain.
-                                         */
-                                        if (viewable.getMimeType().equalsIgnoreCase("text/html")) {
-                                            sbHtml.append(text);
-                                        } else {
-                                            sbText.append(text);
-                                        }
-                                    } catch (Exception e) {
-                                        throw new MessagingException("Unable to get text for message part", e);
+                                    if (copy) {
+                                        // Save mapping: source UID -> target UID
+                                        uidMap.put(uid, randomLocalUid);
+                                    } else {
+                                        // Modify the Message instance to reference the new UID
+                                        message.setUid(randomLocalUid);
                                     }
+
+                                    // The message will be saved with the newly generated UID
+                                    uid = randomLocalUid;
+                                } else {
+                                    /*
+                                     * Replace an existing message in the database
+                                     */
+                                    LocalMessage oldMessage = (LocalMessage) getMessage(uid);
+
+                                    if (oldMessage != null) {
+                                        oldMessageId = oldMessage.getId();
+
+                                        if (!oldMessage.isSet(Flag.SEEN)) {
+                                            setUnreadMessageCount(getUnreadMessageCount() - 1);
+                                        }
+                                        if (oldMessage.isSet(Flag.FLAGGED)) {
+                                            setFlaggedMessageCount(getFlaggedMessageCount() - 1);
+                                        }
+                                    }
+
+                                    deleteAttachments(message.getUid());
                                 }
 
-                                String text = sbText.toString();
-                                String html = markupContent(text, sbHtml.toString());
-                                String preview = calculateContentPreview(text);
-                                // If we couldn't generate a reasonable preview from the text part, try doing it with the HTML part.
-                                if (preview == null || preview.length() == 0) {
-                                    preview = calculateContentPreview(HtmlConverter.htmlToText(html));
+                                boolean isDraft = (message.getHeader(K9.IDENTITY_HEADER) != null);
+
+                                List<Part> attachments;
+                                String text;
+                                String html;
+                                if (isDraft) {
+                                    // Don't modify the text/plain or text/html part of our own
+                                    // draft messages because this will cause the values stored in
+                                    // the identity header to be wrong.
+                                    ViewableContainer container =
+                                            MimeUtility.extractPartsFromDraft(message);
+
+                                    text = container.text;
+                                    html = container.html;
+                                    attachments = container.attachments;
+                                } else {
+                                    ViewableContainer container =
+                                            MimeUtility.extractTextAndAttachments(mApplication, message);
+
+                                    attachments = container.attachments;
+                                    text = container.text;
+                                    html = HtmlConverter.convertEmoji2Img(container.html);
                                 }
+
+                                String preview = calculateContentPreview(text);
 
                                 try {
                                     ContentValues cv = new ContentValues();
@@ -2132,7 +2194,13 @@ public class LocalStore extends Store implements Serializable {
                                         cv.put("message_id", messageId);
                                     }
                                     long messageUid;
-                                    messageUid = db.insert("messages", "uid", cv);
+
+                                    if (oldMessageId == -1) {
+                                        messageUid = db.insert("messages", "uid", cv);
+                                    } else {
+                                        db.update("messages", cv, "id = ?", new String[] { Long.toString(oldMessageId) });
+                                        messageUid = oldMessageId;
+                                    }
                                     for (Part attachment : attachments) {
                                         saveAttachment(messageUid, attachment, copy);
                                     }
@@ -2153,6 +2221,7 @@ public class LocalStore extends Store implements Serializable {
                         return null;
                     }
                 });
+                return uidMap;
             } catch (WrappedException e) {
                 throw(MessagingException) e.getCause();
             }
@@ -2175,49 +2244,17 @@ public class LocalStore extends Store implements Serializable {
                     @Override
                     public Void doDbWork(final SQLiteDatabase db) throws WrappedException, UnavailableStorageException {
                         try {
-                            ArrayList<Part> viewables = new ArrayList<Part>();
-                            ArrayList<Part> attachments = new ArrayList<Part>();
-
                             message.buildMimeRepresentation();
 
-                            MimeUtility.collectParts(message, viewables, attachments);
+                            ViewableContainer container =
+                                    MimeUtility.extractTextAndAttachments(mApplication, message);
 
-                            StringBuilder sbHtml = new StringBuilder();
-                            StringBuilder sbText = new StringBuilder();
-                            for (int i = 0, count = viewables.size(); i < count; i++) {
-                                Part viewable = viewables.get(i);
-                                try {
-                                    String text = MimeUtility.getTextFromPart(viewable);
+                            List<Part> attachments = container.attachments;
+                            String text = container.text;
+                            String html = HtmlConverter.convertEmoji2Img(container.html);
 
-                                    /*
-                                     * Small hack to make sure the string "null" doesn't end up
-                                     * in one of the StringBuilders.
-                                     */
-                                    if (text == null) {
-                                        text = "";
-                                    }
-
-                                    /*
-                                     * Anything with MIME type text/html will be stored as such. Anything
-                                     * else will be stored as text/plain.
-                                     */
-                                    if (viewable.getMimeType().equalsIgnoreCase("text/html")) {
-                                        sbHtml.append(text);
-                                    } else {
-                                        sbText.append(text);
-                                    }
-                                } catch (Exception e) {
-                                    throw new MessagingException("Unable to get text for message part", e);
-                                }
-                            }
-
-                            String text = sbText.toString();
-                            String html = markupContent(text, sbHtml.toString());
                             String preview = calculateContentPreview(text);
-                            // If we couldn't generate a reasonable preview from the text part, try doing it with the HTML part.
-                            if (preview == null || preview.length() == 0) {
-                                preview = calculateContentPreview(HtmlConverter.htmlToText(html));
-                            }
+
                             try {
                                 db.execSQL("UPDATE messages SET "
                                            + "uid = ?, subject = ?, sender_list = ?, date = ?, flags = ?, "
@@ -2351,17 +2388,35 @@ public class LocalStore extends Store implements Serializable {
                                 Body body = attachment.getBody();
                                 if (body instanceof LocalAttachmentBody) {
                                     contentUri = ((LocalAttachmentBody) body).getContentUri();
+                                } else if (body instanceof Message) {
+                                    // It's a message, so use Message.writeTo() to output the
+                                    // message including all children.
+                                    Message message = (Message) body;
+                                    tempAttachmentFile = File.createTempFile("att", null, attachmentDirectory);
+                                    FileOutputStream out = new FileOutputStream(tempAttachmentFile);
+                                    try {
+                                        message.writeTo(out);
+                                    } finally {
+                                        out.close();
+                                    }
+                                    size = (int) (tempAttachmentFile.length() & 0x7FFFFFFFL);
                                 } else {
                                     /*
                                      * If the attachment has a body we're expected to save it into the local store
                                      * so we copy the data into a cached attachment file.
                                      */
                                     InputStream in = attachment.getBody().getInputStream();
-                                    tempAttachmentFile = File.createTempFile("att", null, attachmentDirectory);
-                                    FileOutputStream out = new FileOutputStream(tempAttachmentFile);
-                                    size = IOUtils.copy(in, out);
-                                    in.close();
-                                    out.close();
+                                    try {
+                                        tempAttachmentFile = File.createTempFile("att", null, attachmentDirectory);
+                                        FileOutputStream out = new FileOutputStream(tempAttachmentFile);
+                                        try {
+                                            size = IOUtils.copy(in, out);
+                                        } finally {
+                                            out.close();
+                                        }
+                                    } finally {
+                                        try { in.close(); } catch (Throwable ignore) {}
+                                    }
                                 }
                             }
 
@@ -2573,7 +2628,7 @@ public class LocalStore extends Store implements Serializable {
             setVisibleLimit(mAccount.getDisplayCount());
         }
 
-        private void resetUnreadAndFlaggedCounts() {
+        public void resetUnreadAndFlaggedCounts() {
             try {
                 int newUnread = 0;
                 int newFlagged = 0;
@@ -2646,22 +2701,34 @@ public class LocalStore extends Store implements Serializable {
                 public Void doDbWork(final SQLiteDatabase db) throws WrappedException, UnavailableStorageException {
                     Cursor attachmentsCursor = null;
                     try {
-                        attachmentsCursor = db.query("attachments", new String[]
-                                                     { "id" }, "message_id = ?", new String[]
-                                                     { Long.toString(messageId) }, null, null, null);
+                        String accountUuid = mAccount.getUuid();
+                        Context context = mApplication;
+
+                        // Get attachment IDs
+                        String[] whereArgs = new String[] { Long.toString(messageId) };
+                        attachmentsCursor = db.query("attachments", new String[] { "id" },
+                                "message_id = ?", whereArgs, null, null, null);
+
                         final File attachmentDirectory = StorageManager.getInstance(mApplication)
-                                                         .getAttachmentDirectory(uUid, database.getStorageProviderId());
+                                .getAttachmentDirectory(uUid, database.getStorageProviderId());
+
                         while (attachmentsCursor.moveToNext()) {
-                            long attachmentId = attachmentsCursor.getLong(0);
+                            String attachmentId = Long.toString(attachmentsCursor.getLong(0));
                             try {
-                                File file = new File(attachmentDirectory, Long.toString(attachmentId));
+                                // Delete stored attachment
+                                File file = new File(attachmentDirectory, attachmentId);
                                 if (file.exists()) {
                                     file.delete();
                                 }
-                            } catch (Exception e) {
 
-                            }
+                                // Delete thumbnail file
+                                AttachmentProvider.deleteThumbnail(context, accountUuid,
+                                        attachmentId);
+                            } catch (Exception e) { /* ignore */ }
                         }
+
+                        // Delete attachment metadata from the database
+                        db.delete("attachments", "message_id = ?", whereArgs);
                     } finally {
                         Utility.closeQuietly(attachmentsCursor);
                     }
@@ -2730,6 +2797,8 @@ public class LocalStore extends Store implements Serializable {
             text = text.replaceAll("(?m)^On .*wrote.?$", "");
             // Remove a more generic quote header from the preview
             text = text.replaceAll("(?m)^.*\\w+:$", "");
+            // Remove horizontal rules.
+            text = text.replaceAll("\\s*([-=_]{30,}+)\\s*", " ");
 
             // URLs in the preview should just be shown as "..." - They're not
             // clickable and they usually overwhelm the preview
@@ -2738,6 +2807,9 @@ public class LocalStore extends Store implements Serializable {
             text = text.replaceAll("(\\r|\\n)+", " ");
             // Collapse whitespace in the preview
             text = text.replaceAll("\\s+", " ");
+            // Remove any whitespace at the beginning and end of the string.
+            text = text.trim();
+
             if (text.length() <= 512) {
                 return text;
             } else {
@@ -2745,17 +2817,6 @@ public class LocalStore extends Store implements Serializable {
             }
 
         }
-
-        public String markupContent(String text, String html) {
-            if (text.length() > 0 && html.length() == 0) {
-                html = HtmlConverter.textToHtml(text);
-            }
-
-            html = HtmlConverter.convertEmoji2Img(html);
-
-            return html;
-        }
-
 
         @Override
         public boolean isInTopGroup() {
@@ -3245,10 +3306,8 @@ public class LocalStore extends Store implements Serializable {
 
                 if (!isSet(Flag.DELETED)) {
 
-                    if (flag == Flag.SEEN) {
-                        if (set != isSet(Flag.SEEN)) {
-                            folder.setUnreadMessageCount(folder.getUnreadMessageCount() + (set ? -1 : 1));
-                        }
+                    if (flag == Flag.SEEN && set != isSet(Flag.SEEN)) {
+                        folder.setUnreadMessageCount(folder.getUnreadMessageCount() + (set ? -1 : 1));
                     }
 
                     if (flag == Flag.FLAGGED) {
@@ -3304,6 +3363,25 @@ public class LocalStore extends Store implements Serializable {
                 loadHeaders();
             return super.getHeaderNames();
         }
+
+        @Override
+        public LocalMessage clone() {
+            LocalMessage message = new LocalMessage();
+            super.copy(message);
+
+            message.mId = mId;
+            message.mAttachmentCount = mAttachmentCount;
+            message.mSubject = mSubject;
+            message.mPreview = mPreview;
+            message.mToMeCalculated = mToMeCalculated;
+            message.mCcMeCalculated = mCcMeCalculated;
+            message.mToMe = mToMe;
+            message.mCcMe = mCcMe;
+            message.mHeadersLoaded = mHeadersLoaded;
+            message.mMessageDirty = mMessageDirty;
+
+            return message;
+        }
     }
 
     public static class LocalAttachmentBodyPart extends MimeBodyPart {
@@ -3357,8 +3435,11 @@ public class LocalStore extends Store implements Serializable {
         public void writeTo(OutputStream out) throws IOException, MessagingException {
             InputStream in = getInputStream();
             Base64OutputStream base64Out = new Base64OutputStream(out);
-            IOUtils.copy(in, base64Out);
-            base64Out.close();
+            try {
+                IOUtils.copy(in, base64Out);
+            } finally {
+                base64Out.close();
+            }
         }
 
         public Uri getContentUri() {

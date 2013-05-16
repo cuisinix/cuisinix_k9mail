@@ -1,9 +1,11 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 
 package com.fsck.k9.activity.setup;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -21,17 +23,17 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import com.fsck.k9.*;
+
+import com.fsck.k9.Account;
+import com.fsck.k9.EmailAddressValidator;
+import com.fsck.k9.K9;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.R;
 import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.helper.Utility;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
 
 /**
- * Prompts thPreferences.getPreferences(this)e user for the email address and password. Also prompts for
+ * Prompts the user for the email address and password. Also prompts for
  * "Use this account as default" if this is the 2nd+ account being set up.
  * Attempts to lookup default settings for the domain the user specified. If the
  * domain is known the settings are handed off to the AccountSetupCheckSettings
@@ -51,7 +53,6 @@ public class AccountSetupBasics extends K9Activity
     private CheckBox mDefaultView;
     private Button mNextButton;
     private Button mManualSetupButton;
-    private Button mCancelButton;
     private Account mAccount;
     private Provider mProvider;
 
@@ -73,11 +74,9 @@ public class AccountSetupBasics extends K9Activity
         mDefaultView = (CheckBox)findViewById(R.id.account_default);
         mNextButton = (Button)findViewById(R.id.next);
         mManualSetupButton = (Button)findViewById(R.id.manual_setup);
-        mCancelButton = (Button)findViewById(R.id.cancel);
         
         mNextButton.setOnClickListener(this);
         mManualSetupButton.setOnClickListener(this);
-        mCancelButton.setOnClickListener(this);
         
         mEmailView.addTextChangedListener(this);
         mPasswordView.addTextChangedListener(this);
@@ -131,7 +130,6 @@ public class AccountSetupBasics extends K9Activity
 
         mNextButton.setEnabled(valid);
         mManualSetupButton.setEnabled(valid);
-        mCancelButton.setEnabled(true);
         /*
          * Dim the next button's icon to 50% if the button is disabled.
          * TODO this can probably be done with a stateful drawable. Check into it.
@@ -226,9 +224,7 @@ public class AccountSetupBasics extends K9Activity
 
 
             }
-            
-			mAccount =  Preferences.getPreferences(this).newAccount();
-            
+            mAccount = Preferences.getPreferences(this).newAccount();
             mAccount.setName(getOwnerName());
             mAccount.setEmail(email);
             mAccount.setStoreUri(incomingUri.toString());
@@ -238,11 +234,16 @@ public class AccountSetupBasics extends K9Activity
             mAccount.setArchiveFolderName(getString(R.string.special_mailbox_name_archive));
             // Yahoo! has a special folder for Spam, called "Bulk Mail".
             if (incomingUriTemplate.getHost().toLowerCase().endsWith(".yahoo.com")) {
-            	mAccount.setSpamFolderName("Bulk Mail");
+                mAccount.setSpamFolderName("Bulk Mail");
             } else {
-            	mAccount.setSpamFolderName(getString(R.string.special_mailbox_name_spam));
+                mAccount.setSpamFolderName(getString(R.string.special_mailbox_name_spam));
             }
             mAccount.setSentFolderName(getString(R.string.special_mailbox_name_sent));
+            if (incomingUri.toString().startsWith("imap")) {
+                mAccount.setDeletePolicy(Account.DELETE_POLICY_ON_DELETE);
+            } else if (incomingUri.toString().startsWith("pop3")) {
+                mAccount.setDeletePolicy(Account.DELETE_POLICY_NEVER);
+            }
             AccountSetupCheckSettings.actionCheckSettings(this, mAccount, true, true);
         } catch (UnsupportedEncodingException enc) {
             // This really shouldn't happen since the encoding is hardcoded to UTF-8
@@ -279,7 +280,7 @@ public class AccountSetupBasics extends K9Activity
 
         if (mProvider.note != null) {
             showDialog(DIALOG_NOTE);
-        }else {
+        } else {
             finishAutoSetup();
         }
     }
@@ -332,6 +333,13 @@ public class AccountSetupBasics extends K9Activity
         mAccount.setDraftsFolderName(getString(R.string.special_mailbox_name_drafts));
         mAccount.setTrashFolderName(getString(R.string.special_mailbox_name_trash));
         mAccount.setSentFolderName(getString(R.string.special_mailbox_name_sent));
+        mAccount.setArchiveFolderName(getString(R.string.special_mailbox_name_archive));
+        // Yahoo! has a special folder for Spam, called "Bulk Mail".
+        if (domain.endsWith(".yahoo.com")) {
+            mAccount.setSpamFolderName("Bulk Mail");
+        } else {
+            mAccount.setSpamFolderName(getString(R.string.special_mailbox_name_spam));
+        }
 
         AccountSetupAccountType.actionSelectAccountType(this, mAccount, mDefaultView.isChecked());
         finish();
@@ -367,7 +375,7 @@ public class AccountSetupBasics extends K9Activity
         }
     }
 
-    public Provider findProviderForDomain(String domain) {
+    private Provider findProviderForDomain(String domain) {
         try {
             XmlResourceParser xml = getResources().getXml(R.xml.providers);
             int xmlEventType;

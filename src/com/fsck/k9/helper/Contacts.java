@@ -35,43 +35,20 @@ public abstract class Contacts {
      * @return Appropriate {@link Contacts} instance for this device.
      */
     public static Contacts getInstance(Context context) {
+        Context appContext = context.getApplicationContext();
         if (sInstance == null) {
             /*
              * Check the version of the SDK we are running on. Choose an
              * implementation class designed for that version of the SDK.
              */
-            String className = null;
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ECLAIR_MR1) {
                 /*
                  * The new API was introduced with SDK 5. But Android versions < 2.2
                  * need some additional code to be able to search for phonetic names.
                  */
-                className = "com.fsck.k9.helper.ContactsSdk5p";
+                sInstance = new ContactsSdk5p(appContext);
             } else {
-                className = "com.fsck.k9.helper.ContactsSdk5";
-            }
-
-            /*
-             * Find the required class by name and instantiate it.
-             */
-            try {
-                Class <? extends Contacts > clazz =
-                    Class.forName(className).asSubclass(Contacts.class);
-
-                Constructor <? extends Contacts > constructor = clazz.getConstructor(Context.class);
-                sInstance = constructor.newInstance(context);
-            } catch (ClassNotFoundException e) {
-                Log.e(K9.LOG_TAG, "Couldn't find class: " + className, e);
-            } catch (InstantiationException e) {
-                Log.e(K9.LOG_TAG, "Couldn't instantiate class: " + className, e);
-            } catch (IllegalAccessException e) {
-                Log.e(K9.LOG_TAG, "Couldn't access class: " + className, e);
-            } catch (NoSuchMethodException e) {
-                Log.e(K9.LOG_TAG, "Couldn't find constructor of class: " + className, e);
-            } catch (IllegalArgumentException e) {
-                Log.e(K9.LOG_TAG, "Wrong arguments for constructor of class: " + className, e);
-            } catch (InvocationTargetException e) {
-                Log.e(K9.LOG_TAG, "Couldn't invoke constructor of class: " + className, e);
+                sInstance = new ContactsSdk5(appContext);
             }
         }
 
@@ -103,6 +80,14 @@ public abstract class Contacts {
      *              entity.
      */
     public abstract void createContact(Address email);
+
+    /**
+     * Start the activity to add a phone number to an existing contact or add a new one.
+     *
+     * @param phoneNumber
+     *         The phone number to add to a contact, or to use when creating a new contact.
+     */
+    public abstract void addPhoneContact(String phoneNumber);
 
     /**
      * Check whether the provided email address belongs to one of the contacts.
@@ -166,13 +151,15 @@ public abstract class Contacts {
     public abstract Intent contactPickerIntent();
 
     /**
-     * Given a contact picker intent, returns the primary email address of that
-     * contact.
+     * Given a contact picker intent, returns a {@code ContactItem} instance for that contact.
      *
-     * @param intent The {@link Intent} returned by this contact picker.
-     * @return The primary email address of the picked contact.
+     * @param intent
+     *         The {@link Intent} returned by the contact picker.
+     *
+     * @return A {@link ContactItem} instance describing the picked contact. Or {@code null} if the
+     *         contact doesn't have any email addresses.
      */
-    public abstract String getEmailFromContactPicker(final Intent intent);
+    public abstract ContactItem extractInfoFromContactPickerIntent(final Intent intent);
 
     /**
      * Does the device actually have a Contacts application suitable for

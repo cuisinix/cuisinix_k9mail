@@ -1,6 +1,6 @@
 package com.fsck.k9.activity.setup;
 /*
- * SpinnerHelper donated to Cuisinix Mail by Boutique Software
+ * SpinnerHelper donated to K-9 Mail by Boutique Software
  */
 
 import android.content.Context;

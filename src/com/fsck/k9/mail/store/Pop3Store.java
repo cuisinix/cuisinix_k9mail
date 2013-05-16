@@ -1,51 +1,30 @@
 
 package com.fsck.k9.mail.store;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManager;
-
 import android.util.Log;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.K9;
 import com.fsck.k9.controller.MessageRetrievalListener;
 import com.fsck.k9.helper.Utility;
-import com.fsck.k9.mail.Authentication;
-import com.fsck.k9.mail.AuthenticationFailedException;
-import com.fsck.k9.mail.CertificateValidationException;
-import com.fsck.k9.mail.ConnectionSecurity;
-import com.fsck.k9.mail.FetchProfile;
-import com.fsck.k9.mail.Flag;
-import com.fsck.k9.mail.Folder;
+import com.fsck.k9.mail.*;
 import com.fsck.k9.mail.Folder.OpenMode;
-import com.fsck.k9.mail.Message;
-import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.ServerSettings;
-import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.internet.MimeMessage;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManager;
+import java.io.*;
+import java.net.*;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class Pop3Store extends Store {
     public static final String STORE_TYPE = "POP3";
@@ -911,7 +890,8 @@ public class Pop3Store extends Store {
         }
 
         @Override
-        public void appendMessages(Message[] messages) throws MessagingException {
+        public Map<String, String> appendMessages(Message[] messages) throws MessagingException {
+            return null;
         }
 
         @Override

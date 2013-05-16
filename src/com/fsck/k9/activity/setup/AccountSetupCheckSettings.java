@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 
 package com.fsck.k9.activity.setup;
 
@@ -49,19 +45,19 @@ import java.util.List;
  */
 public class AccountSetupCheckSettings extends K9Activity implements OnClickListener {
 
-	public static final int ACTIVITY_REQUEST_CODE = 1;
+    public static final int ACTIVITY_REQUEST_CODE = 1;
 
-	private static final String EXTRA_ACCOUNT = "account";
+    private static final String EXTRA_ACCOUNT = "account";
 
 	private static final String EXTRA_CHECK_INCOMING = "checkIncoming";
 
-	private static final String EXTRA_CHECK_OUTGOING = "checkOutgoing";
+    private static final String EXTRA_CHECK_OUTGOING = "checkOutgoing";
 
-	private Handler mHandler = new Handler();
+    private Handler mHandler = new Handler();
 
-	private ProgressBar mProgressBar;
+    private ProgressBar mProgressBar;
 
-	private TextView mMessageView;
+    private TextView mMessageView;
 
 	private Account mAccount;
 
@@ -73,363 +69,342 @@ public class AccountSetupCheckSettings extends K9Activity implements OnClickList
 
 	private boolean mDestroyed;
 
-	private boolean mAuthFormatFailed = false;
+    public static void actionCheckSettings(Activity context, Account account,
+                                           boolean checkIncoming, boolean checkOutgoing) {
+        Intent i = new Intent(context, AccountSetupCheckSettings.class);
+        i.putExtra(EXTRA_ACCOUNT, account.getUuid());
+        i.putExtra(EXTRA_CHECK_INCOMING, checkIncoming);
+        i.putExtra(EXTRA_CHECK_OUTGOING, checkOutgoing);
+        context.startActivityForResult(i, ACTIVITY_REQUEST_CODE);
+    }
 
-	private boolean mError = false;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.account_setup_check_settings);
+        mMessageView = (TextView)findViewById(R.id.message);
+        mProgressBar = (ProgressBar)findViewById(R.id.progress);
+        ((Button)findViewById(R.id.cancel)).setOnClickListener(this);
 
-	public static void actionCheckSettings(Activity context, Account account,
-			boolean checkIncoming, boolean checkOutgoing) {
-		Intent i = new Intent(context, AccountSetupCheckSettings.class);
-		i.putExtra(EXTRA_ACCOUNT, account.getUuid());
-		i.putExtra(EXTRA_CHECK_INCOMING, checkIncoming);
-		i.putExtra(EXTRA_CHECK_OUTGOING, checkOutgoing);
-		context.startActivityForResult(i, ACTIVITY_REQUEST_CODE);
-	}
+        setMessage(R.string.account_setup_check_settings_retr_info_msg);
+        mProgressBar.setIndeterminate(true);
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(R.layout.account_setup_check_settings);
-		mMessageView = (TextView)findViewById(R.id.message);
-		mProgressBar = (ProgressBar)findViewById(R.id.progress);
-		((Button)findViewById(R.id.cancel)).setOnClickListener(this);
+        String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
+        mAccount = Preferences.getPreferences(this).getAccount(accountUuid);
+        mCheckIncoming = getIntent().getBooleanExtra(EXTRA_CHECK_INCOMING, false);
+        mCheckOutgoing = getIntent().getBooleanExtra(EXTRA_CHECK_OUTGOING, false);
 
-		setMessage(R.string.account_setup_check_settings_retr_info_msg);
-		mProgressBar.setIndeterminate(true);
+        new Thread() {
+            @Override
+            public void run() {
+                Store store = null;
+                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                try {
+                    if (mDestroyed) {
+                        return;
+                    }
+                    if (mCanceled) {
+                        finish();
+                        return;
+                    }
+                    if (mCheckIncoming) {
+                        store = mAccount.getRemoteStore();
 
-		String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
-		mAccount = Preferences.getPreferences(this).getAccount(accountUuid);
-		mCheckIncoming = getIntent().getBooleanExtra(EXTRA_CHECK_INCOMING, false);
-		mCheckOutgoing = getIntent().getBooleanExtra(EXTRA_CHECK_OUTGOING, false);
+                        if (store instanceof WebDavStore) {
+                            setMessage(R.string.account_setup_check_settings_authenticate);
+                        } else {
+                            setMessage(R.string.account_setup_check_settings_check_incoming_msg);
+                        }
+                        store.checkSettings();
 
-		checkSettingsThread();
-	}
-	
-	public void checkSettingsThread(){
-		new Thread() {
-			@Override
-			public void run() {
-				Store store = null;
-				Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-				try {
-					if (mDestroyed) {
-						return;
-					}
-					if (mCanceled) {
-						finish();
-						return;
-					}
-					if (mCheckIncoming) {
-						store = mAccount.getRemoteStore();
+                        if (store instanceof WebDavStore) {
+                            setMessage(R.string.account_setup_check_settings_fetch);
+                        }
+                        MessagingController.getInstance(getApplication()).listFoldersSynchronous(mAccount, true, null);
+                        MessagingController.getInstance(getApplication()).synchronizeMailbox(mAccount, mAccount.getInboxFolderName(), null, null);
+                    }
+                    if (mDestroyed) {
+                        return;
+                    }
+                    if (mCanceled) {
+                        finish();
+                        return;
+                    }
+                    if (mCheckOutgoing) {
+                        if (!(mAccount.getRemoteStore() instanceof WebDavStore)) {
+                            setMessage(R.string.account_setup_check_settings_check_outgoing_msg);
+                        }
+                        Transport transport = Transport.getInstance(mAccount);
+                        transport.close();
+                        transport.open();
+                        transport.close();
+                    }
+                    if (mDestroyed) {
+                        return;
+                    }
+                    if (mCanceled) {
+                        finish();
+                        return;
+                    }
+                    setResult(RESULT_OK);
+                    finish();
+                } catch (final AuthenticationFailedException afe) {
+                    Log.e(K9.LOG_TAG, "Error while testing settings", afe);
+                    showErrorDialog(
+                        R.string.account_setup_failed_dlg_auth_message_fmt,
+                        afe.getMessage() == null ? "" : afe.getMessage());
+                } catch (final CertificateValidationException cve) {
+                    Log.e(K9.LOG_TAG, "Error while testing settings", cve);
 
-						if (store instanceof WebDavStore) {
-							setMessage(R.string.account_setup_check_settings_authenticate);
-						} else {
-							setMessage(R.string.account_setup_check_settings_check_incoming_msg);
-						}
-						store.checkSettings();
+                    // Avoid NullPointerException in acceptKeyDialog()
+                    if (TrustManagerFactory.getLastCertChain() != null) {
+                        acceptKeyDialog(
+                            R.string.account_setup_failed_dlg_certificate_message_fmt,
+                            cve);
+                    } else {
+                        showErrorDialog(
+                                R.string.account_setup_failed_dlg_server_message_fmt,
+                                (cve.getMessage() == null ? "" : cve.getMessage()));
+                    }
+                } catch (final Throwable t) {
+                    Log.e(K9.LOG_TAG, "Error while testing settings", t);
+                    showErrorDialog(
+                        R.string.account_setup_failed_dlg_server_message_fmt,
+                        (t.getMessage() == null ? "" : t.getMessage()));
 
-						if (store instanceof WebDavStore) {
-							setMessage(R.string.account_setup_check_settings_fetch);
-						}
-						MessagingController.getInstance(getApplication()).listFoldersSynchronous(mAccount, true, null);
-						MessagingController.getInstance(getApplication()).synchronizeMailbox(mAccount, mAccount.getInboxFolderName(), null, null);
-					}
-					if (mDestroyed) {
-						return;
-					}
-					if (mCanceled) {
-						finish();
-						return;
-					}
+                }
+            }
 
-					if (mCheckOutgoing) {
-						if (!(mAccount.getRemoteStore() instanceof WebDavStore)) {
-							setMessage(R.string.account_setup_check_settings_check_outgoing_msg);
-						}
-						Transport transport = Transport.getInstance(mAccount);
-						transport.close();
-						transport.open();
-						transport.close();
-					}
-					if (mDestroyed) {
-						return;
-					}
-					if (mCanceled) {
-						finish();
-						return;
-					}
+        }
+        .start();
+    }
 
-					setResult(RESULT_OK);
-					finish();
-				} catch (final AuthenticationFailedException afe) {
-					mError = true;
-					mAuthFormatFailed = true;
-					Log.e(K9.LOG_TAG, "Error while testing settings", afe);
-					showErrorDialog(
-							R.string.account_setup_failed_dlg_auth_message_fmt,
-							afe.getMessage() == null ? "" : afe.getMessage());
-				} catch (final CertificateValidationException cve) {
-					Log.e(K9.LOG_TAG, "Error while testing settings", cve);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDestroyed = true;
+        mCanceled = true;
+    }
 
-					// Avoid NullPointerException in acceptKeyDialog()
-					if (TrustManagerFactory.getLastCertChain() != null) {
-						acceptKeyDialog(
-								R.string.account_setup_failed_dlg_certificate_message_fmt,
-								cve);
-					} else {
-						showErrorDialog(
-								R.string.account_setup_failed_dlg_server_message_fmt,
-								(cve.getMessage() == null ? "" : cve.getMessage()));
-					}
-				} catch (final Throwable t) {
-					Log.e(K9.LOG_TAG, "Error while testing settings", t);
-					showErrorDialog(
-							R.string.account_setup_failed_dlg_server_message_fmt,
-							(t.getMessage() == null ? "" : t.getMessage()));
+    private void setMessage(final int resId) {
+        mHandler.post(new Runnable() {
+            public void run() {
+                if (mDestroyed) {
+                    return;
+                }
+                mMessageView.setText(getString(resId));
+            }
+        });
+    }
 
-				} finally {
-					if(mError){
-						Preferences.getPreferences(AccountSetupCheckSettings.this).deleteAccount(mAccount);
-					}
-				}
-			}
+    private void showErrorDialog(final int msgResId, final Object... args) {
+        mHandler.post(new Runnable() {
+            public void run() {
+                if (mDestroyed) {
+                    return;
+                }
+                mProgressBar.setIndeterminate(false);
+                new AlertDialog.Builder(AccountSetupCheckSettings.this)
+                .setTitle(getString(R.string.account_setup_failed_dlg_title))
+                .setMessage(getString(msgResId, args))
+                .setCancelable(true)
+                .setNegativeButton(
+                    getString(R.string.account_setup_failed_dlg_continue_action),
 
-		}
-		.start();
-	}
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mCanceled = false;
+                        setResult(RESULT_OK);
+                        finish();
+                    }
+                })
+                .setPositiveButton(
+                    getString(R.string.account_setup_failed_dlg_edit_details_action),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .show();
+            }
+        });
+    }
+    private void acceptKeyDialog(final int msgResId, final Object... args) {
+        mHandler.post(new Runnable() {
+            public void run() {
+                if (mDestroyed) {
+                    return;
+                }
+                final X509Certificate[] chain = TrustManagerFactory.getLastCertChain();
+                String exMessage = "Unknown Error";
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		mDestroyed = true;
-		mCanceled = true;
-	}
+                Exception ex = ((Exception)args[0]);
+                if (ex != null) {
+                    if (ex.getCause() != null) {
+                        if (ex.getCause().getCause() != null) {
+                            exMessage = ex.getCause().getCause().getMessage();
 
-	private void setMessage(final int resId) {
-		mHandler.post(new Runnable() {
-			public void run() {
-				if (mDestroyed) {
-					return;
-				}
-				mMessageView.setText(getString(resId));
-			}
-		});
-	}
+                        } else {
+                            exMessage = ex.getCause().getMessage();
+                        }
+                    } else {
+                        exMessage = ex.getMessage();
+                    }
+                }
 
-	private void showErrorDialog(final int msgResId, final Object... args) {
-		mHandler.post(new Runnable() {
-			public void run() {
-				if (mDestroyed) {
-					return;
-				}
+                mProgressBar.setIndeterminate(false);
+                StringBuilder chainInfo = new StringBuilder(100);
+                MessageDigest sha1 = null;
+                try {
+                    sha1 = MessageDigest.getInstance("SHA-1");
+                } catch (NoSuchAlgorithmException e) {
+                    Log.e(K9.LOG_TAG, "Error while initializing MessageDigest", e);
+                }
+                for (int i = 0; i < chain.length; i++) {
+                    // display certificate chain information
+                    //TODO: localize this strings
+                    chainInfo.append("Certificate chain[").append(i).append("]:\n");
+                    chainInfo.append("Subject: ").append(chain[i].getSubjectDN().toString()).append("\n");
 
-				mProgressBar.setIndeterminate(false);
+                    // display SubjectAltNames too
+                    // (the user may be mislead into mistrusting a certificate
+                    //  by a subjectDN not matching the server even though a
+                    //  SubjectAltName matches)
+                    try {
+                        final Collection < List<? >> subjectAlternativeNames = chain[i].getSubjectAlternativeNames();
+                        if (subjectAlternativeNames != null) {
+                            // The list of SubjectAltNames may be very long
+                            //TODO: localize this string
+                            StringBuilder altNamesText = new StringBuilder();
+                            altNamesText.append("Subject has ").append(subjectAlternativeNames.size()).append(" alternative names\n");
 
-				Builder alert = new AlertDialog.Builder(AccountSetupCheckSettings.this); 
-				alert.setTitle(getString(R.string.account_setup_failed_dlg_title));
-				alert.setMessage(getString(msgResId, args));
-				alert.setCancelable(true);
-				if(!mAuthFormatFailed){
-					alert.setNegativeButton(
-							getString(R.string.account_setup_failed_dlg_continue_action),
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog, int which) {
-									mCanceled = false;
-									setResult(RESULT_OK);
-									finish();
-								}
-							});
-				}
-				alert.setPositiveButton(
-						getString(R.string.account_setup_failed_dlg_edit_details_action),
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog, int which) {
-								finish();
-							}
-						});
-				alert.show();
-			}
-		});
-	}
+                            // we need these for matching
+                            String storeURIHost = (Uri.parse(mAccount.getStoreUri())).getHost();
+                            String transportURIHost = (Uri.parse(mAccount.getTransportUri())).getHost();
 
-	private void acceptKeyDialog(final int msgResId, final Object... args) {
-		mHandler.post(new Runnable() {
-			public void run() {
-				if (mDestroyed) {
-					return;
-				}
-				final X509Certificate[] chain = TrustManagerFactory.getLastCertChain();
-				String exMessage = "Unknown Error";
+                            for (List<?> subjectAlternativeName : subjectAlternativeNames) {
+                                Integer type = (Integer)subjectAlternativeName.get(0);
+                                Object value = subjectAlternativeName.get(1);
+                                String name = "";
+                                switch (type.intValue()) {
+                                case 0:
+                                    Log.w(K9.LOG_TAG, "SubjectAltName of type OtherName not supported.");
+                                    continue;
+                                case 1: // RFC822Name
+                                    name = (String)value;
+                                    break;
+                                case 2:  // DNSName
+                                    name = (String)value;
+                                    break;
+                                case 3:
+                                    Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type x400Address");
+                                    continue;
+                                case 4:
+                                    Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type directoryName");
+                                    continue;
+                                case 5:
+                                    Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type ediPartyName");
+                                    continue;
+                                case 6:  // Uri
+                                    name = (String)value;
+                                    break;
+                                case 7: // ip-address
+                                    name = (String)value;
+                                    break;
+                                default:
+                                    Log.w(K9.LOG_TAG, "unsupported SubjectAltName of unknown type");
+                                    continue;
+                                }
 
-				Exception ex = ((Exception)args[0]);
-				if (ex != null) {
-					if (ex.getCause() != null) {
-						if (ex.getCause().getCause() != null) {
-							exMessage = ex.getCause().getCause().getMessage();
+                                // if some of the SubjectAltNames match the store or transport -host,
+                                // display them
+                                if (name.equalsIgnoreCase(storeURIHost) || name.equalsIgnoreCase(transportURIHost)) {
+                                    //TODO: localize this string
+                                    altNamesText.append("Subject(alt): ").append(name).append(",...\n");
+                                } else if (name.startsWith("*.") && (
+                                            storeURIHost.endsWith(name.substring(2)) ||
+                                            transportURIHost.endsWith(name.substring(2)))) {
+                                    //TODO: localize this string
+                                    altNamesText.append("Subject(alt): ").append(name).append(",...\n");
+                                }
+                            }
+                            chainInfo.append(altNamesText);
+                        }
+                    } catch (Exception e1) {
+                        // don't fail just because of subjectAltNames
+                        Log.w(K9.LOG_TAG, "cannot display SubjectAltNames in dialog", e1);
+                    }
 
-						} else {
-							exMessage = ex.getCause().getMessage();
-						}
-					} else {
-						exMessage = ex.getMessage();
-					}
-				}
+                    chainInfo.append("Issuer: ").append(chain[i].getIssuerDN().toString()).append("\n");
+                    if (sha1 != null) {
+                        sha1.reset();
+                        try {
+                            char[] sha1sum = Hex.encodeHex(sha1.digest(chain[i].getEncoded()));
+                            chainInfo.append("Fingerprint (SHA-1): ").append(new String(sha1sum)).append("\n");
+                        } catch (CertificateEncodingException e) {
+                            Log.e(K9.LOG_TAG, "Error while encoding certificate", e);
+                        }
+                    }
+                }
 
-				mProgressBar.setIndeterminate(false);
-				StringBuilder chainInfo = new StringBuilder(100);
-				MessageDigest sha1 = null;
-				try {
-					sha1 = MessageDigest.getInstance("SHA-1");
-				} catch (NoSuchAlgorithmException e) {
-					Log.e(K9.LOG_TAG, "Error while initializing MessageDigest", e);
-				}
-				for (int i = 0; i < chain.length; i++) {
-					// display certificate chain information
-					//TODO: localize this strings
-					chainInfo.append("Certificate chain[").append(i).append("]:\n");
-					chainInfo.append("Subject: ").append(chain[i].getSubjectDN().toString()).append("\n");
+                new AlertDialog.Builder(AccountSetupCheckSettings.this)
+                .setTitle(getString(R.string.account_setup_failed_dlg_invalid_certificate_title))
+                //.setMessage(getString(R.string.account_setup_failed_dlg_invalid_certificate)
+                .setMessage(getString(msgResId, exMessage)
+                            + " " + chainInfo.toString()
+                           )
+                .setCancelable(true)
+                .setPositiveButton(
+                    getString(R.string.account_setup_failed_dlg_invalid_certificate_accept),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            String alias = mAccount.getUuid();
+                            if (mCheckIncoming) {
+                                alias = alias + ".incoming";
+                            }
+                            if (mCheckOutgoing) {
+                                alias = alias + ".outgoing";
+                            }
+                            TrustManagerFactory.addCertificateChain(alias, chain);
+                        } catch (CertificateException e) {
+                            showErrorDialog(
+                                R.string.account_setup_failed_dlg_certificate_message_fmt,
+                                e.getMessage() == null ? "" : e.getMessage());
+                        }
+                        AccountSetupCheckSettings.actionCheckSettings(AccountSetupCheckSettings.this, mAccount,
+                                mCheckIncoming, mCheckOutgoing);
+                    }
+                })
+                .setNegativeButton(
+                    getString(R.string.account_setup_failed_dlg_invalid_certificate_reject),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .show();
+            }
+        });
+    }
 
-					// display SubjectAltNames too
-					// (the user may be mislead into mistrusting a certificate
-					//  by a subjectDN not matching the server even though a
-					//  SubjectAltName matches)
-					try {
-						final Collection < List<? >> subjectAlternativeNames = chain[i].getSubjectAlternativeNames();
-						if (subjectAlternativeNames != null) {
-							// The list of SubjectAltNames may be very long
-							//TODO: localize this string
-							StringBuilder altNamesText = new StringBuilder();
-							altNamesText.append("Subject has ").append(subjectAlternativeNames.size()).append(" alternative names\n");
-
-							// we need these for matching
-							String storeURIHost = (Uri.parse(mAccount.getStoreUri())).getHost();
-							String transportURIHost = (Uri.parse(mAccount.getTransportUri())).getHost();
-
-							for (List<?> subjectAlternativeName : subjectAlternativeNames) {
-								Integer type = (Integer)subjectAlternativeName.get(0);
-								Object value = subjectAlternativeName.get(1);
-								String name = "";
-								switch (type.intValue()) {
-								case 0:
-									Log.w(K9.LOG_TAG, "SubjectAltName of type OtherName not supported.");
-									continue;
-								case 1: // RFC822Name
-									name = (String)value;
-									break;
-								case 2:  // DNSName
-									name = (String)value;
-									break;
-								case 3:
-									Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type x400Address");
-									continue;
-								case 4:
-									Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type directoryName");
-									continue;
-								case 5:
-									Log.w(K9.LOG_TAG, "unsupported SubjectAltName of type ediPartyName");
-									continue;
-								case 6:  // Uri
-									name = (String)value;
-									break;
-								case 7: // ip-address
-									name = (String)value;
-									break;
-								default:
-									Log.w(K9.LOG_TAG, "unsupported SubjectAltName of unknown type");
-									continue;
-								}
-
-								// if some of the SubjectAltNames match the store or transport -host,
-								// display them
-								if (name.equalsIgnoreCase(storeURIHost) || name.equalsIgnoreCase(transportURIHost)) {
-									//TODO: localize this string
-									altNamesText.append("Subject(alt): ").append(name).append(",...\n");
-								} else if (name.startsWith("*.")) {
-									if (storeURIHost.endsWith(name.substring(2)) || transportURIHost.endsWith(name.substring(2))) {
-										//TODO: localize this string
-										altNamesText.append("Subject(alt): ").append(name).append(",...\n");
-									}
-								}
-							}
-							chainInfo.append(altNamesText);
-						}
-					} catch (Exception e1) {
-						// don't fail just because of subjectAltNames
-						Log.w(K9.LOG_TAG, "cannot display SubjectAltNames in dialog", e1);
-					}
-
-					chainInfo.append("Issuer: ").append(chain[i].getIssuerDN().toString()).append("\n");
-					if (sha1 != null) {
-						sha1.reset();
-						try {
-							char[] sha1sum = Hex.encodeHex(sha1.digest(chain[i].getEncoded()));
-							chainInfo.append("Fingerprint (SHA-1): ").append(new String(sha1sum)).append("\n");
-						} catch (CertificateEncodingException e) {
-							Log.e(K9.LOG_TAG, "Error while encoding certificate", e);
-						}
-					}
-				}
-
-				new AlertDialog.Builder(AccountSetupCheckSettings.this)
-				.setTitle(getString(R.string.account_setup_failed_dlg_invalid_certificate_title))
-				//.setMessage(getString(R.string.account_setup_failed_dlg_invalid_certificate)
-				.setMessage(getString(msgResId, exMessage)
-						+ " " + chainInfo.toString()
-						)
-						.setCancelable(true)
-						.setPositiveButton(
-								getString(R.string.account_setup_failed_dlg_invalid_certificate_accept),
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog, int which) {
-										try {
-											String alias = mAccount.getUuid();
-											if (mCheckIncoming) {
-												alias = alias + ".incoming";
-											}
-											if (mCheckOutgoing) {
-												alias = alias + ".outgoing";
-											}
-											TrustManagerFactory.addCertificateChain(alias, chain);
-										} catch (CertificateException e) {
-											showErrorDialog(
-													R.string.account_setup_failed_dlg_certificate_message_fmt,
-													e.getMessage() == null ? "" : e.getMessage());
-										}
-										AccountSetupCheckSettings.actionCheckSettings(AccountSetupCheckSettings.this, mAccount,
-												mCheckIncoming, mCheckOutgoing);
-									}
-								})
-								.setNegativeButton(
-										getString(R.string.account_setup_failed_dlg_invalid_certificate_reject),
-										new DialogInterface.OnClickListener() {
-											public void onClick(DialogInterface dialog, int which) {
-												finish();
-											}
-										})
-										.show();
-			}
-		});
-	}
-
-	@Override
-	public void onActivityResult(int reqCode, int resCode, Intent data) {
-		setResult(resCode);
-		finish();
-	}
+    @Override
+    public void onActivityResult(int reqCode, int resCode, Intent data) {
+        setResult(resCode);
+        finish();
+    }
 
 
-	private void onCancel() {
-		mCanceled = true;
-		setMessage(R.string.account_setup_check_settings_canceling_msg);
-	}
+    private void onCancel() {
+        mCanceled = true;
+        setMessage(R.string.account_setup_check_settings_canceling_msg);
+    }
 
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.cancel:
-			onCancel();
-			break;
-		}
-	}
+    public void onClick(View v) {
+        switch (v.getId()) {
+        case R.id.cancel:
+            onCancel();
+            break;
+        }
+    }
 }

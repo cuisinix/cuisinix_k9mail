@@ -311,7 +311,6 @@ public class WebDavStore extends Store {
     private String mPath; /* Stores the path for the server */
     private String mAuthPath; /* Stores the path off of the server to post data to for form based authentication */
     private String mMailboxPath; /* Stores the user specified path to the mailbox */
-    private URI mUri; /* Stores the Uniform Resource Indicator with all connection info */
 
     private boolean mSecure;
     private WebDavHttpClient mHttpClient = null;
@@ -447,7 +446,7 @@ public class WebDavStore extends Store {
         if (folderName != null)
             mAccount.setSpamFolderName(folderName);
 
-        // Cuisinix Mail's outbox is a special local folder and different from Exchange/WebDAV's outbox.
+        // K-9 Mail's outbox is a special local folder and different from Exchange/WebDAV's outbox.
         /*
         folderName = getFolderName(specialFoldersMap.get(DAV_MAIL_OUTBOX_FOLDER));
         if (folderName != null)
@@ -1335,13 +1334,15 @@ public class WebDavStore extends Store {
         }
 
         @Override
-        public void copyMessages(Message[] messages, Folder folder) throws MessagingException {
+        public Map<String, String> copyMessages(Message[] messages, Folder folder) throws MessagingException {
             moveOrCopyMessages(messages, folder.getName(), false);
+            return null;
         }
 
         @Override
-        public void moveMessages(Message[] messages, Folder folder) throws MessagingException {
+        public Map<String, String> moveMessages(Message[] messages, Folder folder) throws MessagingException {
             moveOrCopyMessages(messages, folder.getName(), true);
+            return null;
         }
 
         @Override
@@ -1916,8 +1917,9 @@ public class WebDavStore extends Store {
         }
 
         @Override
-        public void appendMessages(Message[] messages) throws MessagingException {
+        public Map<String, String> appendMessages(Message[] messages) throws MessagingException {
             appendWebDavMessages(messages);
+            return null;
         }
 
         public Message[] appendWebDavMessages(Message[] messages) throws MessagingException {
@@ -1987,11 +1989,6 @@ public class WebDavStore extends Store {
         @Override
         public boolean equals(Object o) {
             return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return super.hashCode();
         }
 
         @Override
@@ -2232,7 +2229,6 @@ public class WebDavStore extends Store {
      */
     public class DataSet {
         private HashMap<String, HashMap<String, String>> mData = new HashMap<String, HashMap<String, String>>();
-        // private HashMap<String, String> mLostData = new HashMap<String, String>();
         private StringBuilder mUid = new StringBuilder();
         private HashMap<String, String> mTempData = new HashMap<String, String>();
 
@@ -2250,8 +2246,7 @@ public class WebDavStore extends Store {
 
         public void finish() {
             String uid = mUid.toString();
-            if (!uid.equals("") &&
-                    mTempData != null) {
+            if (uid != null && mTempData != null) {
                 mData.put(uid, mTempData);
             } else if (mTempData != null) {
                 /*

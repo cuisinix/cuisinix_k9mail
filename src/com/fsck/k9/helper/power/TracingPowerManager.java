@@ -18,11 +18,12 @@ public class TracingPowerManager {
     private Timer timer = null;
 
     public static synchronized TracingPowerManager getPowerManager(Context context) {
+        Context appContext = context.getApplicationContext();
         if (tracingPowerManager == null) {
             if (K9.DEBUG) {
                 Log.v(K9.LOG_TAG, "Creating TracingPowerManager");
             }
-            tracingPowerManager = new TracingPowerManager(context);
+            tracingPowerManager = new TracingPowerManager(appContext);
         }
         return tracingPowerManager;
     }
@@ -72,7 +73,7 @@ public class TracingPowerManager {
             }
             raiseNotification();
             if (K9.DEBUG) {
-                Log.w(K9.LOG_TAG, "TracingWakeLock for tag " + tag + " / id " + id + ": acquired with no timeout.  Cuisinix Mail should not do this");
+                Log.w(K9.LOG_TAG, "TracingWakeLock for tag " + tag + " / id " + id + ": acquired with no timeout.  K-9 Mail should not do this");
             }
             if (startTime == null) {
                 startTime = System.currentTimeMillis();

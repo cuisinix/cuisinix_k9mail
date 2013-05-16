@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -41,7 +40,6 @@ public class AccountSetupOptions extends K9Activity implements OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.account_setup_options);
 
         mCheckFrequencyView = (Spinner)findViewById(R.id.account_check_frequency);

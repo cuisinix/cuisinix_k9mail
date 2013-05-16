@@ -65,10 +65,12 @@ public class ActivityListener extends MessagingListener {
                 operation = "";
             }
         }
-        
+
         return context.getString(R.string.activity_header_format, activityPrefix,
                                  (unreadMessageCount > 0 ? context.getString(R.string.activity_unread_count, unreadMessageCount) : ""),
                                  operation);
+
+
     }
 
     public void informUserOfStatus() {

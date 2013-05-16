@@ -1,11 +1,8 @@
-<!--  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
--->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="500dip"
+    android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:paddingRight="1dip"
     android:paddingTop="2dip"
@@ -41,7 +38,7 @@ Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
     
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="500dip"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
         android:paddingLeft="6dip" >

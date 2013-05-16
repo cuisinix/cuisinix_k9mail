@@ -1,7 +1,3 @@
-/*  
-Modified by :
-Pierre GALERNEAU for Cuisinix (www.cuisinix.fr)
-*/
 
 package com.fsck.k9;
 
@@ -29,8 +25,9 @@ public class Preferences {
     private static Preferences preferences;
 
     public static synchronized Preferences getPreferences(Context context) {
+        Context appContext = context.getApplicationContext();
         if (preferences == null) {
-            preferences = new Preferences(context);
+            preferences = new Preferences(appContext);
         }
         return preferences;
     }
@@ -110,7 +107,7 @@ public class Preferences {
 
         return account;
     }
-    
+
     public synchronized Account newAccount() {
         newAccount = new Account(K9.app);
         accounts.put(newAccount.getUuid(), newAccount);
@@ -126,11 +123,8 @@ public class Preferences {
         if (accountsInOrder != null) {
             accountsInOrder.remove(account);
         }
-        try{
-            account.delete(this);
-        }catch(Exception e){
-        	Log.v(K9.LOG_TAG, "Eror deleting null account.");
-        }
+
+        account.delete(this);
 
         if (newAccount == account) {
             newAccount = null;
@@ -159,14 +153,6 @@ public class Preferences {
 
     public void setDefaultAccount(Account account) {
         getPreferences().edit().putString("defaultAccountUuid", account.getUuid()).commit();
-    }
-
-    public void dump() {
-        if (Config.LOGV) {
-            for (String key : getPreferences().getAll().keySet()) {
-                Log.v(K9.LOG_TAG, key + " = " + getPreferences().getAll().get(key));
-            }
-        }
     }
 
     public SharedPreferences getPreferences() {

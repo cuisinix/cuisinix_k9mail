@@ -1,16 +1,20 @@
 package com.fsck.k9.helper;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
+import android.provider.Contacts.Intents.Insert;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Intents;
-import android.provider.ContactsContract.CommonDataKinds.Email;
-import com.fsck.k9.mail.Address;
+import android.util.Log;
+
 import com.fsck.k9.K9;
+import com.fsck.k9.mail.Address;
 
 /**
  * Access the contacts on the device using the API introduced with SDK 5.
@@ -83,6 +87,15 @@ public class ContactsSdk5 extends com.fsck.k9.helper.Contacts {
         }
 
         mContext.startActivity(contactIntent);
+    }
+
+    @Override
+    public void addPhoneContact(final String phoneNumber) {
+        Intent addIntent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+        addIntent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+        addIntent.putExtra(Insert.PHONE, Uri.decode(phoneNumber));
+        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(addIntent);
     }
 
     @Override
@@ -180,23 +193,43 @@ public class ContactsSdk5 extends com.fsck.k9.helper.Contacts {
     }
 
     @Override
-    public String getEmailFromContactPicker(final Intent data) {
+    public ContactItem extractInfoFromContactPickerIntent(final Intent data) {
         Cursor cursor = null;
-        String email = "";
+        ArrayList<String> email = new ArrayList<String>();
 
         try {
             Uri result = data.getData();
+            String displayName = null;
 
             // Get the contact id from the Uri
             String id = result.getLastPathSegment();
-            cursor = mContentResolver.query(Email.CONTENT_URI,
-                                            null, Email.CONTACT_ID + "=?", new String[] { id },
-                                            null);
 
-            int emailIdx = cursor.getColumnIndex(Email.DATA);
+            cursor = mContentResolver.query(Email.CONTENT_URI, PROJECTION,
+                    Email.CONTACT_ID + "=?", new String[] { id }, null);
 
-            if (cursor.moveToFirst()) {
-                email = cursor.getString(emailIdx);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String address = cursor.getString(EMAIL_INDEX);
+                    if (address != null) {
+                        email.add(address);
+                    }
+
+                    if (displayName == null) {
+                        displayName = cursor.getString(NAME_INDEX);
+                    }
+                }
+
+                // Return 'null' if no email addresses have been found
+                if (email.size() == 0) {
+                    return null;
+                }
+
+                // Use the first email address found as display name
+                if (displayName == null) {
+                    displayName = email.get(0);
+                }
+
+                return new ContactItem(displayName, email);
             }
         } catch (Exception e) {
             Log.e(K9.LOG_TAG, "Failed to get email data", e);
@@ -204,7 +237,7 @@ public class ContactsSdk5 extends com.fsck.k9.helper.Contacts {
             Utility.closeQuietly(cursor);
         }
 
-        return email;
+        return null;
     }
 
     /**

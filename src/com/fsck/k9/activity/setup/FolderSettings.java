@@ -9,7 +9,11 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.util.Log;
 
-import com.fsck.k9.*;
+import com.fsck.k9.Account;
+import com.fsck.k9.K9;
+import com.fsck.k9.Preferences;
+import com.fsck.k9.R;
+import com.fsck.k9.activity.FolderInfoHolder;
 import com.fsck.k9.activity.K9PreferenceActivity;
 import com.fsck.k9.mail.Folder.FolderClass;
 import com.fsck.k9.mail.Folder.OpenMode;
@@ -74,8 +78,9 @@ public class FolderSettings extends K9PreferenceActivity {
 
         addPreferencesFromResource(R.xml.folder_settings_preferences);
 
+        String displayName = FolderInfoHolder.getDisplayName(this, mFolder);
         Preference category = findPreference(PREFERENCE_TOP_CATERGORY);
-        category.setTitle(folderName);
+        category.setTitle(displayName);
 
 
         mInTopGroup = (CheckBoxPreference)findPreference(PREFERENCE_IN_TOP_GROUP);
@@ -151,13 +156,13 @@ public class FolderSettings extends K9PreferenceActivity {
     }
 
     @Override
-    public void onBackPressed() {
+    public void onPause() {
         try {
             saveSettings();
         } catch (MessagingException e) {
             Log.e(K9.LOG_TAG, "Saving folder settings failed", e);
         }
 
-        super.onBackPressed();
+        super.onPause();
     }
 }

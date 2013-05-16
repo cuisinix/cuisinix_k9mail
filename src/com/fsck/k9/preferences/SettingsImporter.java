@@ -191,7 +191,8 @@ public class SettingsImporter {
                 try {
                     SharedPreferences.Editor editor = storage.edit();
                     if (imported.globalSettings != null) {
-                        importGlobalSettings(storage, editor, imported.globalSettings);
+                        importGlobalSettings(storage, editor, imported.contentVersion,
+                                imported.globalSettings);
                     } else {
                         Log.w(K9.LOG_TAG, "Was asked to import global settings but none found.");
                     }
@@ -214,7 +215,6 @@ public class SettingsImporter {
 
             if (accountUuids != null && accountUuids.size() > 0) {
                 if (imported.accounts != null) {
-                    List<String> newUuids = new ArrayList<String>();
                     for (String accountUuid : accountUuids) {
                         if (imported.accounts.containsKey(accountUuid)) {
                             ImportedAccount account = imported.accounts.get(accountUuid);
@@ -222,18 +222,35 @@ public class SettingsImporter {
                                 SharedPreferences.Editor editor = storage.edit();
 
                                 AccountDescriptionPair importResult = importAccount(context,
-                                        editor, account, overwrite);
+                                        editor, imported.contentVersion, account, overwrite);
 
-                                String newUuid = importResult.imported.uuid;
-                                if (!importResult.overwritten) {
-                                    newUuids.add(newUuid);
-                                }
                                 if (editor.commit()) {
                                     if (K9.DEBUG) {
                                         Log.v(K9.LOG_TAG, "Committed settings for account \"" +
                                                 importResult.imported.name +
                                                 "\" to the settings database.");
                                     }
+
+                                    // Add UUID of the account we just imported to the list of
+                                    // account UUIDs
+                                    if (!importResult.overwritten) {
+                                        editor = storage.edit();
+
+                                        String newUuid = importResult.imported.uuid;
+                                        String oldAccountUuids = storage.getString("accountUuids", "");
+                                        String newAccountUuids = (oldAccountUuids.length() > 0) ?
+                                                oldAccountUuids + "," + newUuid : newUuid;
+
+                                        putString(editor, "accountUuids", newAccountUuids);
+
+                                        if (!editor.commit()) {
+                                            throw new SettingsImportExportException("Failed to set account UUID list");
+                                        }
+                                    }
+
+                                    // Reload accounts
+                                    preferences.loadAccounts();
+
                                     importedAccounts.add(importResult);
                                 } else {
                                     if (K9.DEBUG) {
@@ -261,16 +278,6 @@ public class SettingsImporter {
                     }
 
                     SharedPreferences.Editor editor = storage.edit();
-
-                    if (newUuids.size() > 0) {
-                        String oldAccountUuids = storage.getString("accountUuids", "");
-                        String appendUuids = Utility.combine(newUuids.toArray(new String[0]), ',');
-                        String prefix = "";
-                        if (oldAccountUuids.length() > 0) {
-                            prefix = oldAccountUuids + ",";
-                        }
-                        putString(editor, "accountUuids", prefix + appendUuids);
-                    }
 
                     String defaultAccountUuid = storage.getString("defaultAccountUuid", null);
                     if (defaultAccountUuid == null) {
@@ -300,15 +307,25 @@ public class SettingsImporter {
     }
 
     private static void importGlobalSettings(SharedPreferences storage,
-            SharedPreferences.Editor editor, ImportedSettings settings) {
+            SharedPreferences.Editor editor, int contentVersion, ImportedSettings settings) {
 
-        Map<String, String> validatedSettings = GlobalSettings.validate(settings.settings);
+        // Validate global settings
+        Map<String, Object> validatedSettings = GlobalSettings.validate(contentVersion,
+                settings.settings);
+
+        // Upgrade global settings to current content version
+        if (contentVersion != Settings.VERSION) {
+            GlobalSettings.upgrade(contentVersion, validatedSettings);
+        }
+
+        // Convert global settings to the string representation used in preference storage
+        Map<String, String> stringSettings = GlobalSettings.convert(validatedSettings);
 
         // Use current global settings as base and overwrite with validated settings read from the
         // import file.
         Map<String, String> mergedSettings =
             new HashMap<String, String>(GlobalSettings.getGlobalSettings(storage));
-        mergedSettings.putAll(validatedSettings);
+        mergedSettings.putAll(stringSettings);
 
         for (Map.Entry<String, String> setting : mergedSettings.entrySet()) {
             String key = setting.getKey();
@@ -318,8 +335,8 @@ public class SettingsImporter {
     }
 
     private static AccountDescriptionPair importAccount(Context context,
-            SharedPreferences.Editor editor, ImportedAccount account, boolean overwrite)
-            throws InvalidSettingValueException {
+            SharedPreferences.Editor editor, int contentVersion, ImportedAccount account,
+            boolean overwrite) throws InvalidSettingValueException {
 
         AccountDescription original = new AccountDescription(account.name, account.uuid);
 
@@ -337,7 +354,7 @@ public class SettingsImporter {
         }
 
         // Make sure the account name is unique
-        String accountName = (account.name != null) ? account.name : "Imported";
+        String accountName = account.name;
         if (isAccountNameUsed(accountName, accounts)) {
             // Account name is already in use. So generate a new one by appending " (x)", where x
             // is the first number >= 1 that results in an unused account name.
@@ -390,17 +407,26 @@ public class SettingsImporter {
         }
 
         // Validate account settings
-        Map<String, String> validatedSettings =
-            AccountSettings.validate(account.settings.settings, !mergeImportedAccount);
+        Map<String, Object> validatedSettings =
+            AccountSettings.validate(contentVersion, account.settings.settings,
+                    !mergeImportedAccount);
+
+        // Upgrade account settings to current content version
+        if (contentVersion != Settings.VERSION) {
+            AccountSettings.upgrade(contentVersion, validatedSettings);
+        }
+
+        // Convert account settings to the string representation used in preference storage
+        Map<String, String> stringSettings = AccountSettings.convert(validatedSettings);
 
         // Merge account settings if necessary
         Map<String, String> writeSettings;
         if (mergeImportedAccount) {
             writeSettings = new HashMap<String, String>(
                     AccountSettings.getAccountSettings(prefs.getPreferences(), uuid));
-            writeSettings.putAll(validatedSettings);
+            writeSettings.putAll(stringSettings);
         } else {
-            writeSettings = validatedSettings;
+            writeSettings = stringSettings;
         }
 
         // Write account settings
@@ -418,7 +444,8 @@ public class SettingsImporter {
 
         // Write identities
         if (account.identities != null) {
-            importIdentities(editor, uuid, account, overwrite, existingAccount, prefs);
+            importIdentities(editor, contentVersion, uuid, account, overwrite, existingAccount,
+                    prefs);
         } else if (!mergeImportedAccount) {
             // Require accounts to at least have one identity
             throw new InvalidSettingValueException();
@@ -427,7 +454,7 @@ public class SettingsImporter {
         // Write folder settings
         if (account.folders != null) {
             for (ImportedFolder folder : account.folders) {
-                importFolder(editor, uuid, folder, mergeImportedAccount, prefs);
+                importFolder(editor, contentVersion, uuid, folder, mergeImportedAccount, prefs);
             }
         }
 
@@ -437,21 +464,29 @@ public class SettingsImporter {
         return new AccountDescriptionPair(original, imported, mergeImportedAccount);
     }
 
-    private static void importFolder(SharedPreferences.Editor editor, String uuid,
-            ImportedFolder folder, boolean overwrite, Preferences prefs) {
+    private static void importFolder(SharedPreferences.Editor editor, int contentVersion,
+            String uuid, ImportedFolder folder, boolean overwrite, Preferences prefs) {
 
         // Validate folder settings
-        Map<String, String> validatedSettings =
-            FolderSettings.validate(folder.settings.settings, !overwrite);
+        Map<String, Object> validatedSettings =
+            FolderSettings.validate(contentVersion, folder.settings.settings, !overwrite);
+
+        // Upgrade folder settings to current content version
+        if (contentVersion != Settings.VERSION) {
+            FolderSettings.upgrade(contentVersion, validatedSettings);
+        }
+
+        // Convert folder settings to the string representation used in preference storage
+        Map<String, String> stringSettings = FolderSettings.convert(validatedSettings);
 
         // Merge folder settings if necessary
         Map<String, String> writeSettings;
         if (overwrite) {
             writeSettings = FolderSettings.getFolderSettings(prefs.getPreferences(),
                     uuid, folder.name);
-            writeSettings.putAll(validatedSettings);
+            writeSettings.putAll(stringSettings);
         } else {
-            writeSettings = validatedSettings;
+            writeSettings = stringSettings;
         }
 
         // Write folder settings
@@ -463,8 +498,8 @@ public class SettingsImporter {
         }
     }
 
-    private static void importIdentities(SharedPreferences.Editor editor, String uuid,
-            ImportedAccount account, boolean overwrite, Account existingAccount,
+    private static void importIdentities(SharedPreferences.Editor editor, int contentVersion,
+            String uuid, ImportedAccount account, boolean overwrite, Account existingAccount,
             Preferences prefs) throws InvalidSettingValueException {
 
         String accountKeyPrefix = uuid + ".";
@@ -530,17 +565,25 @@ public class SettingsImporter {
 
             if (identity.settings != null) {
                 // Validate identity settings
-                Map<String, String> validatedSettings = IdentitySettings.validate(
-                        identity.settings.settings, !mergeSettings);
+                Map<String, Object> validatedSettings = IdentitySettings.validate(
+                        contentVersion, identity.settings.settings, !mergeSettings);
+
+                // Upgrade identity settings to current content version
+                if (contentVersion != Settings.VERSION) {
+                    IdentitySettings.upgrade(contentVersion, validatedSettings);
+                }
+
+                // Convert identity settings to the representation used in preference storage
+                Map<String, String> stringSettings = IdentitySettings.convert(validatedSettings);
 
                 // Merge identity settings if necessary
                 Map<String, String> writeSettings;
                 if (mergeSettings) {
                     writeSettings = new HashMap<String, String>(IdentitySettings.getIdentitySettings(
                             prefs.getPreferences(), uuid, writeIdentityIndex));
-                    writeSettings.putAll(validatedSettings);
+                    writeSettings.putAll(stringSettings);
                 } else {
-                    writeSettings = validatedSettings;
+                    writeSettings = stringSettings;
                 }
 
                 // Write identity settings
@@ -677,7 +720,7 @@ public class SettingsImporter {
 
         String contentVersionString = xpp.getAttributeValue(null,
                 SettingsExporter.VERSION_ATTRIBUTE);
-        validateContentVersion(contentVersionString);
+        result.contentVersion = validateContentVersion(contentVersionString);
 
         int eventType = xpp.next();
         while (!(eventType == XmlPullParser.END_TAG &&
@@ -756,7 +799,7 @@ public class SettingsImporter {
                     versionString);
         }
 
-        if (version != Settings.VERSION) {
+        if (version < 1 || version > Settings.VERSION) {
             throw new SettingsImportExportException("Unsupported content version: " +
                     versionString);
         }
@@ -899,6 +942,11 @@ public class SettingsImporter {
         } else {
             skipToEndTag(xpp, SettingsExporter.ACCOUNT_ELEMENT);
             Log.i(K9.LOG_TAG, "Skipping account with UUID " + uuid);
+        }
+
+        // If we couldn't find an account name use the UUID
+        if (account.name == null) {
+            account.name = uuid;
         }
 
         return account;
@@ -1066,6 +1114,7 @@ public class SettingsImporter {
     }
 
     private static class Imported {
+        public int contentVersion;
         public ImportedSettings globalSettings;
         public Map<String, ImportedAccount> accounts;
     }

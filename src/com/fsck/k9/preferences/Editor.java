@@ -91,7 +91,6 @@ public class Editor implements android.content.SharedPreferences.Editor {
             }
         };
         storage.doInTransaction(committer);
-        
         long endTime = System.currentTimeMillis();
         Log.i(K9.LOG_TAG, "Preferences commit took " + (endTime - startTime) + "ms");
 
@@ -140,10 +139,9 @@ public class Editor implements android.content.SharedPreferences.Editor {
         return this;
     }
 
-	public android.content.SharedPreferences.Editor putStringSet(String arg0,
-			Set<String> arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public android.content.SharedPreferences.Editor putStringSet(String arg0, Set<String> arg1) {
+        throw new RuntimeException("Not implemented");
+    }
 
 }
