@@ -895,6 +895,7 @@ public class MessageList
     private void initializeLayout() {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.message_list);
 
         mListView = (ListView) findViewById(R.id.message_list);

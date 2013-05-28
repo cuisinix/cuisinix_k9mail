@@ -18,7 +18,6 @@ import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.K9Activity;
-import java.net.URI;
 
 /**
  * Prompts the user to select an account type. The account type, along with the

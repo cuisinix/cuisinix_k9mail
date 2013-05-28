@@ -457,6 +457,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.message_compose);
 
         final Intent intent = getIntent();

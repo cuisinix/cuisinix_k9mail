@@ -6,9 +6,9 @@
     android:orientation="vertical" >
 
     <include layout="@layout/wizard_head" />
-
+<!--
     <include layout="@layout/wizard_menu_message_compose_view" />
-
+-->
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="0dip"

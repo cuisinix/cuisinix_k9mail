@@ -6,9 +6,9 @@
     android:orientation="vertical" >
     
     <include layout="@layout/wizard_head" />
-    
+    <!-- 
     <include layout="@layout/wizard_menu_message_list" />    
-
+ -->
     <ListView
         android:id="@+id/message_list"
         android:layout_width="fill_parent"

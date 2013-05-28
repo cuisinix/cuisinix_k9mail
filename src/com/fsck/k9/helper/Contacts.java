@@ -1,14 +1,10 @@
 package com.fsck.k9.helper;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Build;
 import android.content.Intent;
-import android.util.Log;
-import com.fsck.k9.K9;
 import com.fsck.k9.mail.Address;
 
 /**

@@ -1,7 +1,6 @@
 
 package com.fsck.k9.mail.internet;
 
-import android.text.SpannableString;
 
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.MessagingException;
@@ -39,6 +38,7 @@ public class TextBody implements Body {
                 QuotedPrintableOutputStream qp = new QuotedPrintableOutputStream(out, false);
                 qp.write(bytes);
                 qp.flush();
+                qp.close();
             }
         }
     }

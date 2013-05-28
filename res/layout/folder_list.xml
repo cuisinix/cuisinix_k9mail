@@ -5,9 +5,9 @@
     android:layout_width="fill_parent">
     
     <include layout="@layout/wizard_head" />
-    
+<!--   
     <include layout="@layout/wizard_menu_folders" />
-    
+ -->
     <ListView
         android:id="@android:id/list"
         android:layout_width="fill_parent"
