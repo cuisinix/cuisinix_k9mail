@@ -19,7 +19,7 @@ import com.fsck.k9.Account.SortType;
 import com.fsck.k9.FontSizes;
 import com.fsck.k9.K9;
 import com.fsck.k9.K9.NotificationHideSubject;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import com.fsck.k9.helper.DateFormatter;
 import com.fsck.k9.preferences.Settings.BooleanSetting;
 import com.fsck.k9.preferences.Settings.ColorSetting;

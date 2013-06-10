@@ -16,6 +16,7 @@
 
 package com.fsck.k9;
 
+import com.fsck.cuisinix.R;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import android.content.Context;

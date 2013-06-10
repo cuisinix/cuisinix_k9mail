@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import android.content.Context;
 
+import com.fsck.cuisinix.R;
 import com.fsck.k9.mail.Flag;
 
 /**

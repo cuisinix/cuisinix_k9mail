@@ -2,6 +2,8 @@ package com.fsck.k9.activity;
 
 import java.io.Serializable;
 
+import android.text.Spanned;
+
 /**
  * <p>Represents an HTML document with an insertion point for placing a reply. The quoted
  * document may have been modified to make it suitable for insertion. The modified quoted
@@ -105,10 +107,10 @@ class InsertableHtmlContent implements Serializable {
     /**
      * Set the inserted content to the specified content. Replaces anything currently in the
      * inserted content buffer.
-     * @param content
+     * @param text
      */
-    public void setUserContent(final String content) {
-        userContent = new StringBuilder(content);
+    public void setUserContent(final String text) {
+        userContent = new StringBuilder(text);
     }
 
     /**

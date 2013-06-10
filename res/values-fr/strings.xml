@@ -779,8 +779,9 @@ de plus</string>
     <string name="account_settings_signature_use_label">Utiliser la signature</string>
     <string name="account_settings_signature_label">Signature par défaut</string>
     <string name="account_settings_signature_summary">Ajouter une signature à chaque message envoyé</string>
-
-    <string name="default_signature"><Data><![CDATA[Envoyé de ma tablette <b><a href=\"http://www.cuisinix.fr\" style=\"text-decoration:none; color:black;\">Cuisinix</a></b>, excusez la briéveté.]]> </Data></string>
+	
+	<string name="default_signature">Envoyé de mon appli Cuisinix, excusez la briéveté.</string>
+   	
     <string name="default_identity_description">Identité initiale</string>
     <string name="choose_identity">Choisir l\'identité</string>
     <string name="choose_identity_title">Choisir l\'identité</string>

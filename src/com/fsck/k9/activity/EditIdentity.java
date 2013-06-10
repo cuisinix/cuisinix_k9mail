@@ -4,6 +4,7 @@ import java.util.List;
 
 import android.os.Bundle;
 import android.text.Html;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.view.View;
 import android.widget.CheckBox;
@@ -14,7 +15,7 @@ import android.widget.LinearLayout;
 import com.fsck.k9.Account;
 import com.fsck.k9.Identity;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 
 public class EditIdentity extends K9Activity {
 
@@ -80,7 +81,7 @@ public class EditIdentity extends K9Activity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     mSignatureLayout.setVisibility(View.VISIBLE);
-                    mSignatureView.setText(mIdentity.getSignature());
+                    mSignatureView.setText(mIdentity.getSignature().toString());
                 } else {
                     mSignatureLayout.setVisibility(View.GONE);
                 }
@@ -88,7 +89,7 @@ public class EditIdentity extends K9Activity {
         });
 
         if (mSignatureUse.isChecked()) {
-            mSignatureView.setText(mIdentity.getSignature());
+            mSignatureView.setText(mIdentity.getSignature().toString());
         } else {
             mSignatureLayout.setVisibility(View.GONE);
         }
@@ -101,8 +102,7 @@ public class EditIdentity extends K9Activity {
         //      mIdentity.setAlwaysBcc(mAccountAlwaysBcc.getText().toString());
         mIdentity.setName(mNameView.getText().toString());
         mIdentity.setSignatureUse(mSignatureUse.isChecked());
-        Spanned s = Html.fromHtml(mSignatureView.getText().toString());
-        mIdentity.setSignature(s);
+        mIdentity.setSignature(mSignatureView.getText().toString());
 
         if (mReplyTo.getText().length() == 0) {
             mIdentity.setReplyTo(null);

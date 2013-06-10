@@ -57,7 +57,7 @@ import com.fsck.k9.AccountStats;
 import com.fsck.k9.FontSizes;
 import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import com.fsck.k9.SearchSpecification;
 import com.fsck.k9.activity.setup.AccountSettings;
 import com.fsck.k9.activity.setup.FolderSettings;

@@ -20,7 +20,7 @@ import android.view.View;
 import android.widget.AbsoluteLayout;
 import android.widget.ImageView;
 
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import com.fsck.k9.view.ColorPickerBox;
 
 

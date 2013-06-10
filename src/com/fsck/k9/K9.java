@@ -25,6 +25,7 @@ import android.os.Looper;
 import android.text.format.Time;
 import android.util.Log;
 
+import com.fsck.cuisinix.R;
 import com.fsck.k9.Account.SortType;
 import com.fsck.k9.activity.MessageCompose;
 import com.fsck.k9.controller.MessagingController;

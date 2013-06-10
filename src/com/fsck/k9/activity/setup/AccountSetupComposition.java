@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Html;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
@@ -22,7 +23,7 @@ import android.widget.RadioButton;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import com.fsck.k9.activity.K9Activity;
 
 public class AccountSetupComposition extends K9Activity {
@@ -116,8 +117,7 @@ public class AccountSetupComposition extends K9Activity {
         mAccount.setName(mAccountName.getText().toString());
         mAccount.setSignatureUse(mAccountSignatureUse.isChecked());
         if (mAccountSignatureUse.isChecked()) {
-        	Spanned s = Html.fromHtml(mAccountSignature.getText().toString());
-            mAccount.setSignature(s);
+            mAccount.setSignature(mAccountSignature.getText().toString());
             boolean isSignatureBeforeQuotedText = mAccountSignatureBeforeLocation.isChecked();
             mAccount.setSignatureBeforeQuotedText(isSignatureBeforeQuotedText);
         }

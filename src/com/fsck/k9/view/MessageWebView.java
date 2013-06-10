@@ -9,7 +9,7 @@ import android.view.KeyEvent;
 import android.webkit.WebSettings;
 import android.widget.Toast;
 import com.fsck.k9.K9;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import java.lang.reflect.Method;
 import com.nobu_games.android.view.web.TitleBarWebView;
 public class MessageWebView extends TitleBarWebView {

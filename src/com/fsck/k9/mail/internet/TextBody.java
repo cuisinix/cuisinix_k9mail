@@ -2,6 +2,9 @@
 package com.fsck.k9.mail.internet;
 
 
+import android.text.Html;
+import android.text.Spanned;
+
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.MessagingException;
 
@@ -29,7 +32,11 @@ public class TextBody implements Body {
         this.mBody = body;
     }
 
-    public void writeTo(OutputStream out) throws IOException, MessagingException {
+    public TextBody(Spanned text) {
+        this.mBody = text.toString();
+	}
+
+	public void writeTo(OutputStream out) throws IOException, MessagingException {
         if (mBody != null) {
             byte[] bytes = mBody.getBytes(mCharset);
             if ("8bit".equals(mEncoding)) {

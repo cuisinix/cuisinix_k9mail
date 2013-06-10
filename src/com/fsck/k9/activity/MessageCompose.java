@@ -30,13 +30,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.OpenableColumns;
+import android.text.Editable;
 import android.text.Html;
+import android.text.SpannableString;
+import android.text.Html.ImageGetter;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.util.Rfc822Tokenizer;
@@ -74,7 +78,7 @@ import com.fsck.k9.FontSizes;
 import com.fsck.k9.Identity;
 import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.R;
+import com.fsck.cuisinix.R;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.crypto.CryptoProvider;
@@ -823,6 +827,26 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
         mQuotedText.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
         mSignatureView.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
 
+        Editable htmltext = mSignatureView.getText(); 
+        Spanned text = Html.fromHtml( htmltext.toString(), new ImageGetter() {
+			
+			@Override
+			public Drawable getDrawable(String source) {
+				int id;
+	            if (source.contains("logo_fond_blanc.png")) {
+	                id = R.drawable.logo_fond_blanc;
+	            }
+	            else {
+	                return null;
+	            }
+
+	            Drawable d = getResources().getDrawable(id);
+	            d.setBounds(0,0,d.getIntrinsicWidth(),d.getIntrinsicHeight());
+	            return d;
+			}
+		}, null  ); 
+        mSignatureView.setText( text );
+        
         updateMessageFormat();
     }
 
@@ -1216,9 +1240,9 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
                         text = appendSignature(text);
                     }
                 }
-
+                
                 // Convert the text to HTML
-                text = HtmlConverter.textToHtmlFragment(text);
+                //text = HtmlConverter.textToHtmlFragment(text);
 
                 /*
                  * Set the insertion location based upon our reply after quote setting.
@@ -1237,7 +1261,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
                     mQuotedHtmlContent.setInsertionLocation(
                             InsertableHtmlContent.InsertionLocation.BEFORE_QUOTE);
                     if (!isDraft) {
-                        text += "<br><br>";
+                        text = text + "<br><br>";
                     }
                 }
 
@@ -1288,7 +1312,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
                     composedMessageOffset = quotedText.length() + "\n".length();
                     text = quotedText + "\n" + text;
                 } else {
-                    text += "\n\n" + quotedText.toString();
+                    text = text + "\n\n" + quotedText.toString();
                 }
             }
 
@@ -1369,7 +1393,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
             composedMimeMessage.addBodyPart(new MimeBodyPart(body, "text/html"));
             bodyPlain = buildText(isDraft, SimpleMessageFormat.TEXT);
             composedMimeMessage.addBodyPart(new MimeBodyPart(bodyPlain, "text/plain"));
-
+            
             if (hasAttachments) {
                 // If we're HTML and have attachments, we have a MimeMultipart container to hold the
                 // whole message (mp here), of which one part is a MimeMultipart container
@@ -1379,7 +1403,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
                 mp.addBodyPart(new MimeBodyPart(composedMimeMessage));
                 addAttachmentsToMessage(mp);
                 message.setBody(mp);
-            } else {
+           	} else {
                 // If no attachments, our multipart/alternative part is the only one we need.
                 message.setBody(composedMimeMessage);
             }
@@ -1401,7 +1425,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
             // Add the identity to the message.
             message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(body, bodyPlain));
         }
-
+        
         return message;
     }
 
@@ -1645,16 +1669,35 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
     }
 
 
-    private String appendSignature(String originalText) {
-        String text = originalText;
+    private String appendSignature(String text2) {
+    	String text = text2;
         if (mIdentity.getSignatureUse()) {
-            String signature = mSignatureView.getText().toString();
+            Spanned signature = mSignatureView.getText();
+            
+            Editable htmltext = mSignatureView.getText(); 
+            signature = Html.fromHtml( htmltext.toString(), new ImageGetter() {
+    			
+    			@Override
+    			public Drawable getDrawable(String source) {
+    				int id;
+    	            if (source.contains("logo_fond_blanc.png")) {
+    	                id = R.drawable.logo_fond_blanc;
+    	            }
+    	            else {
+    	                return null;
+    	            }
 
-            if (signature != null && !signature.contentEquals("")) {
-                text += "\n" + signature;
+    	            Drawable d = getResources().getDrawable(id);
+    	            d.setBounds(0,0,d.getIntrinsicWidth(),d.getIntrinsicHeight());
+    	            return d;
+    			}
+    		}, null  ); 
+            
+            if (signature != null && !signature.equals("")) {
+                text = text + "\n--\n" + signature;
             }
         }
-
+        
         return text;
     }
 
@@ -2575,7 +2618,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
         Identity newIdentity = new Identity();
         if (k9identity.containsKey(IdentityField.SIGNATURE)) {
             newIdentity.setSignatureUse(true);
-            Spanned s = Html.fromHtml(k9identity.get(IdentityField.SIGNATURE));
+            String s = k9identity.get(IdentityField.SIGNATURE);
             newIdentity.setSignature(s);
             mSignatureChanged = true;
         } else {
@@ -3576,6 +3619,7 @@ public class MessageCompose extends K9Activity implements OnClickListener, OnFoc
                 // messages.
                 messageFormat = SimpleMessageFormat.TEXT;
             } else {
+
                 messageFormat = SimpleMessageFormat.HTML;
             }
         } else {

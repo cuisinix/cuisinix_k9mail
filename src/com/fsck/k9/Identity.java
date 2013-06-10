@@ -38,12 +38,12 @@ public class Identity implements Serializable {
         mSignatureUse = signatureUse;
     }
 
-    public synchronized Spanned getSignature() {
-        return new SpannableString(mSignature);
+    public synchronized String getSignature() {
+        return mSignature;
     }
 
-    public synchronized void setSignature(Spanned signature) {
-        mSignature = signature.toString();
+    public synchronized void setSignature(String s) {
+        mSignature = s;
     }
 
     public synchronized String getDescription() {
@@ -64,6 +64,6 @@ public class Identity implements Serializable {
 
     @Override
     public synchronized String toString() {
-        return "Account.Identity(description=" + mDescription + ", name=" + mName + ", email=" + mEmail + ", replyTo=" + replyTo + ", signature=" + mSignature.toString();
+        return "Account.Identity(description=" + mDescription + ", name=" + mName + ", email=" + mEmail + ", replyTo=" + replyTo + ", signature=" + mSignature;
     }
 }

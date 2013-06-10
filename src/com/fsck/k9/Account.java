@@ -18,10 +18,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.text.Html;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.util.Log;
 
+import com.fsck.cuisinix.R;
 import com.fsck.k9.activity.setup.AccountSetupComposition;
 import com.fsck.k9.crypto.Apg;
 import com.fsck.k9.crypto.CryptoProvider;
@@ -252,9 +254,9 @@ public class Account implements BaseAccount {
         mFolderTargetMode = FolderMode.NOT_SECOND_CLASS;
         mSortType = DEFAULT_SORT_TYPE;
         mSortAscending.put(DEFAULT_SORT_TYPE, DEFAULT_SORT_ASCENDING);
-        mShowPictures = ShowPictures.NEVER;
+        mShowPictures = ShowPictures.ALWAYS;
         mEnableMoveButtons = false;
-        mIsSignatureBeforeQuotedText = false;
+        mIsSignatureBeforeQuotedText = true;
         mExpungePolicy = EXPUNGE_IMMEDIATELY;
         mAutoExpandFolderName = INBOX;
         mInboxFolderName = INBOX;
@@ -286,7 +288,8 @@ public class Account implements BaseAccount {
         
         Identity identity = new Identity();
         identity.setSignatureUse(true);
-        SpannableString s = new SpannableString("<hr />" + 
+        String s = context.getString(R.string.default_signature);
+        /*SpannableString s = new SpannableString("<hr />" + 
         		"<div style=\"width:100%; height:44px; display:inline-block;\">" +
         		"<div style=\"width:200px; height:100%; float:left;\">" + 
         		"<img src=\"http://cuisinix.fr/img/logo_fond_blanc.png\"/>" + 
@@ -294,7 +297,7 @@ public class Account implements BaseAccount {
         		"<div style=\"width:500px; position:relative; margin-top:12px; margin-left:10px; float:left;\">" + 
         		context.getString(R.string.default_signature) +
         		"</div>" + 
-        		"</div>");
+        		"</div>");*/
         identity.setSignature(s);
         
         //Sauvegarde de la signature
@@ -820,10 +823,10 @@ public class Account implements BaseAccount {
     }
 
     public synchronized Spanned getSignature() {
-        return identities.get(0).getSignature();
+        return Html.fromHtml(identities.get(0).getSignature());
     }
 
-    public synchronized void setSignature(Spanned signature) {
+    public synchronized void setSignature(String signature) {
         identities.get(0).setSignature(signature);
     }
 
@@ -1262,8 +1265,7 @@ public class Account implements BaseAccount {
                 identity.setName(name);
                 identity.setEmail(email);
                 identity.setSignatureUse(signatureUse);
-                SpannableString s = new SpannableString(signature);
-                identity.setSignature(s);
+                identity.setSignature(signature);
                 identity.setDescription(description);
                 identity.setReplyTo(replyTo);
                 newIdentities.add(identity);
@@ -1281,8 +1283,7 @@ public class Account implements BaseAccount {
             identity.setName(name);
             identity.setEmail(email);
             identity.setSignatureUse(signatureUse);
-            SpannableString s = new SpannableString(signature);
-            identity.setSignature(s);
+            identity.setSignature(signature);
             identity.setDescription(email);
             newIdentities.add(identity);
         }

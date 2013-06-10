@@ -6,10 +6,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.preference.*;
+import android.preference.ListPreference;
 import android.view.Window;
 
-import com.fsck.k9.*;
+import com.fsck.cuisinix.R;
+import com.fsck.k9.FontSizes;
+import com.fsck.k9.K9;
+import com.fsck.k9.Preferences;
 import com.fsck.k9.activity.K9PreferenceActivity;
 
 /**
